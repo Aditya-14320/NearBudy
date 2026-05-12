@@ -1,19 +1,25 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Ghost } from 'lucide-react';
+import { useAppContext } from '../context/AppContext';
 import './SplashScreen.css';
 
 const SplashScreen = () => {
   const navigate = useNavigate();
+  const { currentUser, loadingAuth } = useAppContext();
 
   useEffect(() => {
-    // Simulate loading time, then redirect to login
-    const timer = setTimeout(() => {
-      navigate('/login');
-    }, 2500);
-
-    return () => clearTimeout(timer);
-  }, [navigate]);
+    if (!loadingAuth) {
+      const timer = setTimeout(() => {
+        if (currentUser) {
+          navigate('/home');
+        } else {
+          navigate('/login');
+        }
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [loadingAuth, currentUser, navigate]);
 
   return (
     <div className="splash-container animate-fade-in">

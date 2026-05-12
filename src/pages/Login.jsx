@@ -11,15 +11,23 @@ import {
   createUserWithEmailAndPassword
 } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
+import { useAppContext } from '../context/AppContext';
 import './Login.css';
 
 const Login = () => {
+  const { currentUser, loadingAuth } = useAppContext();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
   const navigate = useNavigate();
+
+  // If already logged in, go home
+  if (!loadingAuth && currentUser) {
+    navigate('/home');
+    return null;
+  }
 
 
 
