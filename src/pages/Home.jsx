@@ -26,20 +26,6 @@ const Home = () => {
   const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Auto-rotate logic: Mark top users as viewed every minute to rotate the feed
-  useEffect(() => {
-    if (displayUsers.length <= 3) return;
-    
-    const interval = setInterval(() => {
-      // Mark top 2 users as viewed so they move down in the next shuffle
-      const topIds = displayUsers.slice(0, 2).map(u => u.id);
-      topIds.forEach(id => markAsViewed(id));
-      setRefreshKey(prev => prev + 1);
-    }, 60000); 
-
-    return () => clearInterval(interval);
-  }, [displayUsers, markAsViewed]);
-
   // Advanced Recommendation Algorithm
   const suggestions = useMemo(() => {
     if (!currentUser) return [];
@@ -95,6 +81,20 @@ const Home = () => {
         (u.profession && u.profession.toLowerCase().includes(searchQuery.toLowerCase()))
       )
     : suggestions;
+
+  // Auto-rotate logic: Mark top users as viewed every minute to rotate the feed
+  useEffect(() => {
+    if (displayUsers.length <= 3) return;
+    
+    const interval = setInterval(() => {
+      // Mark top 2 users as viewed so they move down in the next shuffle
+      const topIds = displayUsers.slice(0, 2).map(u => u.id);
+      topIds.forEach(id => markAsViewed(id));
+      setRefreshKey(prev => prev + 1);
+    }, 60000); 
+
+    return () => clearInterval(interval);
+  }, [displayUsers, markAsViewed]);
 
   const handleUserClick = (user) => {
     setSelectedUser(user);
