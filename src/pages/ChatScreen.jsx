@@ -47,8 +47,8 @@ const ChatScreen = () => {
 
     const fullOtherUser = nearbyUsers.find(u => u.id === otherUserId) || existingChat.userDetails?.[otherUserId] || fallback;
     
-    let isOnline;
-    let lastActiveText;
+    let isOnlineStatus = false;
+    let statusText = "Offline";
 
     if (fullOtherUser.lastActive) {
       let activeTime = 0;
@@ -61,28 +61,21 @@ const ChatScreen = () => {
       }
 
       if (activeTime > 0) {
-        // eslint-disable-next-line react-hooks/purity
         const diff = Date.now() - activeTime;
-        if (diff < 5 * 60 * 1000) {
-          isOnline = true;
-          lastActiveText = "Active now";
+        if (diff < 60 * 1000) { // 1 minute window for "Active now"
+          isOnlineStatus = true;
+          statusText = "Active now";
         } else {
-          isOnline = false;
+          isOnlineStatus = false;
           const mins = Math.floor(diff / 60000);
-          if (mins < 60) lastActiveText = `Seen ${mins}m ago`;
-          else if (mins < 1440) lastActiveText = `Seen ${Math.floor(mins/60)}h ago`;
-          else lastActiveText = `Seen ${Math.floor(mins/1440)}d ago`;
+          if (mins < 60) statusText = `Active ${mins}m ago`;
+          else if (mins < 1440) statusText = `Active ${Math.floor(mins/60)}h ago`;
+          else statusText = `Active ${Math.floor(mins/1440)}d ago`;
         }
-      } else {
-        isOnline = true;
-        lastActiveText = "Active now";
       }
-    } else {
-      isOnline = true;
-      lastActiveText = "Active now"; // Fallback
     }
 
-    return { chatUser: fullOtherUser, isOnline, lastActiveText };
+    return { chatUser: fullOtherUser, isOnline: isOnlineStatus, lastActiveText: statusText };
   }, [id, chats, currentUser, nearbyUsers]);
 
   const [otherTyping, setOtherTyping] = useState(false);
@@ -192,15 +185,22 @@ const ChatScreen = () => {
     setUploadProgress(0);
   };
 
+  const lastTypingUpdate = useRef(0);
+
   const handleType = (val) => {
     setInputText(val);
     
-    // Broadcast typing status
-    updateDoc(doc(db, "chats", id), { typing: currentUser?.id }).catch(() => {});
+    // Broadcast typing status (throttled)
+    const now = Date.now();
+    if (now - lastTypingUpdate.current > 1500) {
+      updateDoc(doc(db, "chats", id), { typing: currentUser?.id }).catch(() => {});
+      lastTypingUpdate.current = now;
+    }
     
     clearTimeout(typingTimer.current);
     typingTimer.current = setTimeout(() => {
       updateDoc(doc(db, "chats", id), { typing: null }).catch(() => {});
+      lastTypingUpdate.current = 0;
     }, 2000);
   };
 
@@ -284,10 +284,11 @@ const ChatScreen = () => {
 
   return (
     <div className="chat-screen animate-fade-in">
-      <div className="chat-header glass-panel">
+      <div className="chat-header">
         <button className="icon-btn back-btn" onClick={() => navigate(-1)}>
-          <ArrowLeft size={24} />
+          <ArrowLeft size={22} />
         </button>
+        
         <div className="chat-header-user">
           <div className="header-avatar-wrapper">
             <img src={chatUser.avatar} alt="Avatar" className="header-avatar" />
@@ -295,15 +296,29 @@ const ChatScreen = () => {
           </div>
           <div className="header-info">
             <h3>{chatUser.name}</h3>
-            <span className={`status ${isOnline ? 'online' : 'offline'}`}>{otherTyping ? "Typing..." : lastActiveText}</span>
+            <span className={`status ${isOnline ? 'online' : 'offline'}`}>
+              {otherTyping ? "typing..." : (
+                <>
+                  {isOnline && <span className="online-indicator"></span>}
+                  {lastActiveText}
+                </>
+              )}
+            </span>
           </div>
         </div>
+
         <button className="icon-btn">
-          <MoreVertical size={24} />
+          <MoreVertical size={22} />
         </button>
       </div>
 
       <div className="messages-container">
+        {grouped.length === 0 && (
+          <div className="empty-chat-placeholder">
+            <div className="empty-chat-icon">✨</div>
+            <p>Start your private conversation</p>
+          </div>
+        )}
         {grouped.map((g) => (
           <Fragment key={g.day}>
             <div className="day-separator">
@@ -350,9 +365,9 @@ const ChatScreen = () => {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="chat-composer-wrapper glass-panel">
+      <div className="chat-composer-wrapper">
         {imagePreview && (
-          <div className="image-preview-container">
+          <div className="image-preview-container animate-scale-in">
             <img src={imagePreview} alt="Preview" className="composer-img-preview" />
             {!isUploading && (
               <button className="remove-img-btn" onClick={clearAttachment}>
@@ -366,11 +381,11 @@ const ChatScreen = () => {
         )}
         
         <div className="chat-input-area">
-          <button className="icon-btn-secondary" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
-            <ImageIcon size={22} />
-          </button>
-          
           <div className="input-glass-wrapper">
+            <button className="icon-btn-secondary" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+              <ImageIcon size={22} />
+            </button>
+            
             <input 
               type="file" 
               ref={fileInputRef} 
@@ -378,6 +393,7 @@ const ChatScreen = () => {
               accept="image/*" 
               style={{ display: 'none' }} 
             />
+            
             <textarea 
               className="chat-input" 
               placeholder="Message..." 
@@ -386,7 +402,7 @@ const ChatScreen = () => {
               onChange={(e) => {
                 handleType(e.target.value);
                 e.target.style.height = 'auto';
-                e.target.style.height = `${Math.min(e.target.scrollHeight, 100)}px`;
+                e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
               }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
@@ -397,6 +413,7 @@ const ChatScreen = () => {
               onFocus={scrollToBottom}
               disabled={isUploading}
             />
+            
             <button className="icon-btn-secondary emoji-btn" disabled={isUploading}>
               <Smile size={22} />
             </button>

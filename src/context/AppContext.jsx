@@ -3,6 +3,7 @@ import { auth, db } from '../firebase';
 import { doc, getDoc, collection, onSnapshot, addDoc, updateDoc, deleteDoc, setDoc, query, where, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
+import { LocalNotifications } from '@capacitor/local-notifications';
 
 /* eslint-disable react-refresh/only-export-components */
 const AppContext = createContext();
@@ -215,12 +216,26 @@ export const AppProvider = ({ children }) => {
             console.error('Error on registration: ', error);
           });
 
-          PushNotifications.addListener('pushNotificationReceived', (notification) => {
+          PushNotifications.addListener('pushNotificationReceived', async (notification) => {
             console.log('Push received: ', notification);
+            // Show a local notification if the app is in the foreground
+            await LocalNotifications.schedule({
+              notifications: [
+                {
+                  title: notification.title || "NearBudy",
+                  body: notification.body || "",
+                  id: Date.now(),
+                  extra: notification.data
+                }
+              ]
+            });
           });
 
           PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
-            console.log('Push action performed: ', notification);
+            const data = notification.notification.data;
+            if (data && data.chatId) {
+              window.location.href = `/chat/${data.chatId}`;
+            }
           });
         } catch (error) {
           console.error("Error setting up push notifications:", error);
