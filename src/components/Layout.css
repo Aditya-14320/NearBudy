@@ -9,6 +9,6 @@
 
 .layout-content {
   flex: 1;
-  overflow: hidden; /* Each page will handle its own scroll if needed */
-  position: relative;
+  overflow-y: auto;
+  padding-bottom: calc(70px + env(safe-area-inset-bottom));
 }
