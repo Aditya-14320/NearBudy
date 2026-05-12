@@ -1,0 +1,14 @@
+.layout-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  position: relative;
+  background: var(--bg-primary);
+}
+
+.layout-content {
+  flex: 1;
+  overflow: hidden; /* Each page will handle its own scroll if needed */
+  position: relative;
+}

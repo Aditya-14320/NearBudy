@@ -1,0 +1,273 @@
+.map-page-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #0a0a0e; /* Very dark background */
+  padding-bottom: 90px; /* Space for BottomNav */
+  font-family: 'Inter', sans-serif;
+  overflow: hidden;
+}
+
+.map-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  color: white;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  z-index: 10;
+}
+
+.map-page-header h2 {
+  font-size: 18px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.icon-btn-transparent {
+  background: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+}
+
+.icon-btn-transparent:active {
+  transform: scale(0.9);
+}
+
+.map-box-container {
+  flex: 1;
+  margin: 16px 20px;
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+  /* Grid Background matching the image */
+  background-color: #0d0a14;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-position: center center;
+  box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.5);
+  z-index: 1;
+}
+
+/* Add a subtle radial glow behind the center to match the image's pinkish center glow */
+.map-box-container::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, rgba(162, 28, 175, 0.15) 0%, transparent 70%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.leaflet-container {
+  background: transparent !important;
+  font-family: inherit;
+  z-index: 1;
+}
+
+/* Custom Leaflet Pin Styling */
+.custom-leaflet-icon {
+  background: transparent;
+  border: none;
+}
+
+.nearby-pill {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: rgba(20, 15, 25, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 24px;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 1000;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.nearby-pill .sparkle {
+  color: #f43f5e; /* Vibrant pink */
+}
+
+/* Center Pin (User Location) */
+.center-pin-wrapper {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 60px;
+  height: 60px;
+}
+
+.center-pin {
+  width: 32px;
+  height: 32px;
+  background: #a21caf; /* Purple */
+  border-radius: 50%;
+  border: 3px solid #b45309; /* Goldish/Bronze border matching image */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
+  box-shadow: 0 0 15px rgba(162, 28, 175, 0.6);
+}
+
+.center-pin svg {
+  margin-bottom: 2px;
+}
+
+.pin-pulse-1, .pin-pulse-2 {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: 2px solid rgba(162, 28, 175, 0.4);
+  border-radius: 50%;
+  animation: pulse-ring 3s infinite cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+.pin-pulse-2 {
+  animation-delay: 1.5s;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.8); opacity: 0.8; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+/* User Pin (Other Users) */
+.user-pin {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #4a044e; /* Dark purple */
+  border: 2px solid #be123c; /* Dark red/pink border */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  transition: transform 0.2s;
+}
+
+.user-pin:active {
+  transform: scale(0.9);
+}
+
+.user-pin img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.9;
+  mix-blend-mode: luminosity; 
+  filter: sepia(1) hue-rotate(250deg) saturate(3) brightness(0.7); 
+}
+
+.user-pin.locked {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: #1a1a24;
+}
+
+.user-pin.locked img {
+  filter: blur(5px) brightness(0.6);
+  opacity: 0.8;
+}
+
+.lock-icon-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
+}
+
+.locked-count {
+  color: #a1a1aa;
+  font-weight: 500;
+  font-size: 13px;
+  margin-left: 2px;
+}
+
+/* Bottom User Card */
+.bottom-user-section {
+  padding: 0 20px 20px; /* Leave space below if needed, though map-page-container has bottom padding */
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+}
+
+.nearby-user-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #131118;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 12px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.nearby-user-card:active {
+  transform: scale(0.98);
+  background: #1a1721;
+}
+
+.card-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #4a044e;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.card-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  mix-blend-mode: luminosity;
+  filter: sepia(1) hue-rotate(250deg) saturate(3) brightness(0.7);
+}
+
+.card-info {
+  flex: 1;
+}
+
+.card-info h4 {
+  font-size: 16px;
+  font-weight: 800;
+  color: white;
+  margin-bottom: 4px;
+}
+
+.card-info p {
+  font-size: 13px;
+  color: #a1a1aa;
+  font-weight: 500;
+}
