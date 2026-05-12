@@ -4,6 +4,7 @@ import { db } from '../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useAppContext } from '../context/AppContext';
 import ProfilePreviewModal from './ProfilePreviewModal';
+import { AVATAR_PRESETS } from '../utils/avatars';
 import './EditProfileModal.css';
 
 const EditProfileModal = ({ isOpen, onClose }) => {
@@ -230,6 +231,21 @@ const EditProfileModal = ({ isOpen, onClose }) => {
                   </div>
                 </div>
                 <p style={{fontSize: 12, color: 'var(--text-secondary)'}}>Tap to change photo</p>
+                
+                <div className="avatar-presets-edit animate-fade-in">
+                  <p className="preset-label">Or choose a character</p>
+                  <div className="presets-grid-edit">
+                    {[...AVATAR_PRESETS.male, ...AVATAR_PRESETS.female, ...AVATAR_PRESETS.neutral].map((url, i) => (
+                      <div 
+                        key={i} 
+                        className={`preset-item-edit ${formData.avatar === url ? 'selected' : ''}`}
+                        onClick={() => setFormData(prev => ({ ...prev, avatar: url }))}
+                      >
+                        <img src={url} alt="preset" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               <div className="input-group">

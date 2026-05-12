@@ -4,6 +4,7 @@ import { Camera, Check } from 'lucide-react';
 import { auth, db } from '../firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { useAppContext } from '../context/AppContext';
+import { AVATAR_PRESETS, getDefaultAvatar } from '../utils/avatars';
 import './ProfileSetup.css';
 
 const ProfileSetup = () => {
@@ -21,7 +22,15 @@ const ProfileSetup = () => {
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData(prev => {
+      const newData = { ...prev, [name]: value };
+      // Auto-update avatar if it's currently a default one
+      if (name === 'gender' && (!photo || Object.values(AVATAR_PRESETS).flat().includes(photo))) {
+        setPhoto(getDefaultAvatar(value));
+      }
+      return newData;
+    });
   };
 
   const handlePhotoClick = () => {
@@ -107,8 +116,25 @@ const ProfileSetup = () => {
           ) : (
             <Camera size={32} className="camera-icon" />
           )}
+          <div className="photo-glow"></div>
         </div>
-        <span className="photo-label">Tap to add photo</span>
+        <span className="photo-label">Tap to upload custom</span>
+        
+        <div className="avatar-presets-container animate-slide-up">
+          <p className="preset-title">Or choose a character</p>
+          <div className="presets-grid">
+            {[...AVATAR_PRESETS.male, ...AVATAR_PRESETS.female, ...AVATAR_PRESETS.neutral].map((url, i) => (
+              <div 
+                key={i} 
+                className={`preset-item ${photo === url ? 'selected' : ''}`}
+                onClick={() => setPhoto(url)}
+              >
+                <img src={url} alt="preset" />
+              </div>
+            ))}
+          </div>
+        </div>
+
         <input 
           type="file" 
           ref={fileInputRef} 
