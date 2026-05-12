@@ -5,6 +5,7 @@ import { auth, db } from '../firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { useAppContext } from '../context/AppContext';
 import { AVATAR_PRESETS, getDefaultAvatar } from '../utils/avatars';
+import { uploadToCloudinary } from '../utils/cloudinary';
 import './ProfileSetup.css';
 
 const ProfileSetup = () => {
@@ -74,13 +75,27 @@ const ProfileSetup = () => {
       if (user) {
         const coords = await getLocation();
         
+        let finalAvatar = photo || getDefaultAvatar(formData.gender);
+        
+        // Only upload to Cloudinary if it's a custom photo (base64) 
+        // and NOT one of our local preset URLs
+        const isPreset = Object.values(AVATAR_PRESETS).flat().includes(photo);
+        if (photo && !isPreset) {
+          try {
+            finalAvatar = await uploadToCloudinary(photo);
+          } catch (uploadError) {
+            console.error("Cloudinary upload failed, falling back to local photo", uploadError);
+            // Fallback to whatever was in photo, or a default
+          }
+        }
+        
         const userData = {
           id: user.uid,
           name: formData.name,
           profession: formData.profession,
           age: parseInt(formData.age, 10),
           gender: formData.gender,
-          avatar: photo || 'https://i.pravatar.cc/150?u=' + user.uid,
+          avatar: finalAvatar,
           isPremium: false,
           lat: coords.lat,
           lng: coords.lng

@@ -5,6 +5,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { useAppContext } from '../context/AppContext';
 import ProfilePreviewModal from './ProfilePreviewModal';
 import { AVATAR_PRESETS } from '../utils/avatars';
+import { uploadToCloudinary } from '../utils/cloudinary';
 import './EditProfileModal.css';
 
 const EditProfileModal = ({ isOpen, onClose }) => {
@@ -141,8 +142,23 @@ const EditProfileModal = ({ isOpen, onClose }) => {
 
     setLoading(true);
     try {
+      let finalAvatar = formData.avatar;
+      
+      // Only upload to Cloudinary if it's a custom photo (base64) 
+      // and NOT one of our local preset URLs
+      const isPreset = Object.values(AVATAR_PRESETS).flat().includes(formData.avatar);
+      if (formData.avatar && !isPreset && formData.avatar.startsWith('data:image')) {
+        try {
+          finalAvatar = await uploadToCloudinary(formData.avatar);
+        } catch (uploadError) {
+          console.error("Cloudinary upload failed", uploadError);
+          // Fallback to base64 if upload fails, though Cloudinary is preferred
+        }
+      }
+
       const dataToSave = {
         ...formData,
+        avatar: finalAvatar,
         interests: formData.interests.join(', ') // Convert array to comma-string for DB
       };
       
