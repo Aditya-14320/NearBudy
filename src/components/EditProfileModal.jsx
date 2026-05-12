@@ -159,7 +159,7 @@ const EditProfileModal = ({ isOpen, onClose }) => {
       const dataToSave = {
         ...formData,
         avatar: finalAvatar,
-        interests: formData.interests.join(', ') // Convert array to comma-string for DB
+        interests: Array.isArray(formData.interests) ? formData.interests.join(', ') : (formData.interests || '')
       };
       
       await updateDoc(doc(db, "users", currentUser.id), dataToSave);
@@ -178,8 +178,12 @@ const EditProfileModal = ({ isOpen, onClose }) => {
       }, 1500);
       
     } catch (error) {
-      console.error("Error updating profile:", error);
-      alert("Failed to update profile.");
+      console.error("Detailed Error updating profile:", error);
+      if (error.code === 'resource-exhausted') {
+        alert("Profile update failed: Image size too large. Please try a different photo or use a character preset.");
+      } else {
+        alert("Failed to update profile. Check console for details.");
+      }
     } finally {
       setLoading(false);
     }
@@ -241,7 +245,7 @@ const EditProfileModal = ({ isOpen, onClose }) => {
                   hidden 
                 />
                 <div className="avatar-preview-wrapper" onClick={() => fileInputRef.current.click()}>
-                  <img src={formData.avatar || 'https://via.placeholder.com/150'} alt="Avatar" />
+                  <img src={formData.avatar || '/avatars/neutral.png'} alt="Avatar" />
                   <div className="camera-icon-badge">
                     {uploadingImage ? <div className="spinner" style={{width: 16, height: 16, borderWidth: 2}}></div> : <Camera size={16} />}
                   </div>

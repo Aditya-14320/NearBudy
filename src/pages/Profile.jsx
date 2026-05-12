@@ -34,7 +34,7 @@ const Profile = () => {
       <div className="profile-content-scroll">
         <div className="profile-info-section-new">
           <div className="profile-avatar-glow">
-            <img src={currentUser.avatar || 'https://via.placeholder.com/150'} alt="Profile" className="main-avatar-new" />
+            <img src={currentUser.avatar || '/avatars/neutral.png'} alt="Profile" className="main-avatar-new" />
           </div>
           
           <h3 className="profile-name-new">

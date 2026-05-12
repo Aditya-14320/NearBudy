@@ -110,8 +110,12 @@ const ProfileSetup = () => {
       }
       navigate('/home');
     } catch (err) {
-      console.error("Error saving profile: ", err);
-      alert("Failed to save profile.");
+      console.error("Detailed Error saving profile: ", err);
+      if (err.code === 'resource-exhausted') {
+        alert("Failed to save profile: Image size too large.");
+      } else {
+        alert("Failed to save profile. Check console for details.");
+      }
     } finally {
       setLoading(false);
     }

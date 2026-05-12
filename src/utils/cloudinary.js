@@ -2,6 +2,8 @@ export const uploadToCloudinary = async (fileOrBase64) => {
   const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
   const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'ml_default';
 
+  console.log('Cloudinary Upload Attempt:', { cloudName, uploadPreset });
+
   const formData = new FormData();
   formData.append('file', fileOrBase64);
   formData.append('upload_preset', uploadPreset);
