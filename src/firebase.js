@@ -4,14 +4,18 @@ import { getAnalytics } from "firebase/analytics";
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
+if (!import.meta.env.VITE_FIREBASE_PROJECT_ID) {
+  console.error("Firebase Project ID is missing! Make sure you have set the environment variables in your .env file (locally) or in your hosting provider's dashboard (Netlify/Vercel).");
+}
+
 const firebaseConfig = {
-  apiKey: "AIzaSyAg0v4rVwQ9-PNu7cVl8NGubelIvQG1FLA",
-  authDomain: "amdd-76ff2.firebaseapp.com",
-  projectId: "amdd-76ff2",
-  storageBucket: "amdd-76ff2.firebasestorage.app",
-  messagingSenderId: "428992181441",
-  appId: "1:428992181441:web:be5c19484100a343edd040",
-  measurementId: "G-VTDT307MCY"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 const app = initializeApp(firebaseConfig);
