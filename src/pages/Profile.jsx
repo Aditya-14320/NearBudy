@@ -26,8 +26,8 @@ const Profile = () => {
     <div className="profile-container animate-fade-in">
       <div className="profile-header-new">
         <h2>Profile</h2>
-        <button className="icon-btn" onClick={() => setIsSettingsModalOpen(true)}>
-          <Settings size={26} strokeWidth={1.5} />
+        <button className="settings-btn-premium" onClick={() => setIsSettingsModalOpen(true)}>
+          <Settings size={22} strokeWidth={2} />
         </button>
       </div>
 
