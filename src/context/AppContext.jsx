@@ -2,8 +2,7 @@ import { createContext, useState, useContext, useEffect, useRef } from 'react';
 import { auth, db } from '../firebase';
 import { doc, getDoc, collection, onSnapshot, addDoc, updateDoc, deleteDoc, setDoc, query, where, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { Capacitor } from '@capacitor/core';
-import { PushNotifications } from '@capacitor/push-notifications';
-import { LocalNotifications } from '@capacitor/local-notifications';
+// Capacitor plugins will be imported dynamically to prevent web build errors
 
 /* eslint-disable react-refresh/only-export-components */
 const AppContext = createContext();
@@ -193,6 +192,10 @@ export const AppProvider = ({ children }) => {
     if (Capacitor.isNativePlatform()) {
       const setupPush = async () => {
         try {
+          // Dynamic imports for native plugins
+          const { PushNotifications } = await import('@capacitor/push-notifications');
+          const { LocalNotifications } = await import('@capacitor/local-notifications');
+
           let permStatus = await PushNotifications.checkPermissions();
 
           if (permStatus.receive === 'prompt') {
@@ -245,11 +248,15 @@ export const AppProvider = ({ children }) => {
       setupPush();
       
       return () => {
-        try {
-          PushNotifications.removeAllListeners();
-        } catch {
-          // Ignore
-        }
+        const cleanup = async () => {
+          try {
+            const { PushNotifications } = await import('@capacitor/push-notifications');
+            PushNotifications.removeAllListeners();
+          } catch {
+            // Ignore
+          }
+        };
+        cleanup();
       };
     }
   }, [currentUser?.id]);
