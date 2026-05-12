@@ -237,6 +237,36 @@
   cursor: pointer;
 }
 
+.section-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.refresh-feed-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #a1a1aa;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.refresh-feed-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.refresh-feed-btn:active {
+  transform: scale(0.95);
+}
+
 .suggested-cards-scroll {
   display: flex;
   gap: 12px;
@@ -286,4 +316,38 @@
   color: white;
   font-size: 14px;
   font-weight: 700;
+}
+
+.suggestion-card-wrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.skip-user-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 5;
+  transition: all 0.2s;
+}
+
+.skip-user-btn:hover {
+  background: rgba(244, 63, 94, 0.2);
+  border-color: #f43f5e;
+}
+
+.skip-user-btn:active {
+  transform: scale(0.9);
 }

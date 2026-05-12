@@ -17,6 +17,13 @@ export const AppProvider = ({ children }) => {
   const [chats, setChats] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const notifiedRefs = useRef(new Set());
+  const [sessionViews, setSessionViews] = useState(new Set());
+  const [skippedUsers, setSkippedUsers] = useState(() => {
+    try {
+      const saved = localStorage.getItem('skipped_users');
+      return saved ? JSON.parse(saved) : {};
+    } catch { return {}; }
+  });
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -459,6 +466,16 @@ export const AppProvider = ({ children }) => {
     return true;
   });
 
+  const markAsViewed = (userId) => {
+    setSessionViews(prev => new Set([...prev, userId]));
+  };
+
+  const markAsSkipped = (userId) => {
+    const newSkipped = { ...skippedUsers, [userId]: Date.now() };
+    setSkippedUsers(newSkipped);
+    localStorage.setItem('skipped_users', JSON.stringify(newSkipped));
+  };
+
   return (
     <AppContext.Provider value={{
       currentUser, setCurrentUser,
@@ -476,7 +493,11 @@ export const AppProvider = ({ children }) => {
       blockUser,
       unblockUser,
       reportUser,
-      createQuickChat
+      createQuickChat,
+      sessionViews,
+      markAsViewed,
+      skippedUsers,
+      markAsSkipped
     }}>
       {!loadingAuth && children}
     </AppContext.Provider>
