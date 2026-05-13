@@ -135,8 +135,8 @@ const MapPage = () => {
       <div className="map-box-container">
         <div className="nearby-pill">
           <Sparkles className="sparkle" size={16} /> 
-          <span>{visibleNearby.length} visible nearby</span>
-          <span className="locked-count">• +{mockLockedUsers.length} locked 🔒</span>
+          <span>{realNearby.length} visible nearby</span>
+          {mockUsers.length > 0 && <span className="locked-count">• +{mockUsers.length} locked 🔒</span>}
         </div>
         
         <MapContainer 
@@ -163,18 +163,17 @@ const MapPage = () => {
       </div>
 
       <div className="bottom-user-section">
-        {/* Render a single user card simulating the mock */}
-        {visibleNearby.length > 0 && (
+        {allMapUsers.length > 0 && (
           <div 
             className="nearby-user-card"
-            onClick={() => handleUserClick(visibleNearby[0])}
+            onClick={() => handleUserClick(allMapUsers[0])}
           >
             <div className="card-avatar">
-              <img src={getThumbnailUrl(visibleNearby[0].avatar, 100)} alt={visibleNearby[0].name} />
+              <img src={getThumbnailUrl(allMapUsers[0].avatar, 100)} alt={allMapUsers[0].name} />
             </div>
             <div className="card-info">
-              <h4>{visibleNearby[0].isLocked && !isPremium ? "Hidden User" : `${visibleNearby[0].name}, ${visibleNearby[0].age || 23}`}</h4>
-              <p>{visibleNearby[0].activity || "coffee"} • {visibleNearby[0].timeAgo || "39m"}</p>
+              <h4>{allMapUsers[0].isLocked && !isPremium ? "Hidden User" : `${allMapUsers[0].name}, ${allMapUsers[0].age || 23}`}</h4>
+              <p>{allMapUsers[0].profession || "NearBudy"} • Nearby</p>
             </div>
           </div>
         )}
