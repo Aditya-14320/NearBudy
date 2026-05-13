@@ -27,11 +27,11 @@ const Home = () => {
   const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Advanced Recommendation Algorithm
+  // Hyper-Dynamic Recommendation Algorithm
   const suggestions = useMemo(() => {
     if (!currentUser) return [];
 
-    // 1. Base Filter (Remove self, matched, blocked, and recently skipped)
+    // 1. Base Filter (Strict exclusion)
     const matchedIds = chats.flatMap(c => c.users || []);
     const requestedIds = [...requests, ...sentRequests].map(r => r.fromId === currentUser.id ? r.toId : r.fromId);
     
@@ -41,7 +41,7 @@ const Home = () => {
         if (matchedIds.includes(u.id)) return false;
         if (requestedIds.includes(u.id)) return false;
         
-        // Hide skipped users for 24 hours
+        // Hide skipped users for 24h
         const skipTime = skippedUsers[u.id];
         if (skipTime && Date.now() - skipTime < 24 * 60 * 60 * 1000) return false;
         
@@ -50,22 +50,26 @@ const Home = () => {
       .map(u => {
         let score = 0;
         
-        // Priority: New users (Joined in last 48h)
+        // 🔥 PRIORITY 1: New users (Extreme boost for first 72h)
         const joinDate = u.createdAt?.toMillis ? u.createdAt.toMillis() : 0;
-        if (joinDate > Date.now() - 48 * 60 * 60 * 1000) score += 100;
+        if (joinDate > Date.now() - 72 * 60 * 60 * 1000) score += 500;
         
-        // Priority: Online/Active users
+        // ⚡ PRIORITY 2: Active users (Online or active recently)
         const activeTime = u.lastActive?.toMillis ? u.lastActive.toMillis() : 0;
-        if (Date.now() - activeTime < 5 * 60 * 1000) score += 50; // Active in last 5m
+        if (Date.now() - activeTime < 10 * 60 * 1000) score += 300; 
         
-        // Priority: Nearby
-        if (u.distance.includes('m') || (parseFloat(u.distance) < 2)) score += 30;
+        // 📍 PRIORITY 3: Proximity (Hyper-local boost)
+        if (u.distance === "Very Close") score += 200;
+        if (u.distance.includes('m')) score += 150;
+        if (parseFloat(u.distance) < 2) score += 100;
         
-        // Anti-Repetition: Penalize users already viewed in this session
-        if (sessionViews.has(u.id)) score -= 200;
+        // 🔄 ANTI-STALENESS: Heavy penalty for already seen in this session
+        if (sessionViews.has(u.id)) {
+          score -= 1000; // Pushes them to the very bottom
+        }
         
-        // Add subtle randomization (0-10 points) to keep feed feeling alive
-        score += Math.random() * 15;
+        // 🎲 FRESHNESS JITTER: High randomization for "Fresh on Refresh" feeling
+        score += Math.random() * 250;
         
         return { ...u, _score: score };
       })
@@ -83,16 +87,16 @@ const Home = () => {
       )
     : suggestions;
 
-  // Auto-rotate logic: Mark top users as viewed every minute to rotate the feed
+  // Auto-rotate logic: Aggressively cycle profiles every 30 seconds
   useEffect(() => {
-    if (displayUsers.length <= 3) return;
+    if (displayUsers.length <= 4) return;
     
     const interval = setInterval(() => {
-      // Mark top 2 users as viewed so they move down in the next shuffle
+      // Mark top 2 users as viewed so they rotate out
       const topIds = displayUsers.slice(0, 2).map(u => u.id);
       topIds.forEach(id => markAsViewed(id));
       setRefreshKey(prev => prev + 1);
-    }, 60000); 
+    }, 30000); 
 
     return () => clearInterval(interval);
   }, [displayUsers, markAsViewed]);

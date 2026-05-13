@@ -37,18 +37,41 @@ const UserMarker = memo(({ user, isPremium, onClick }) => {
   );
 });
 
-const generateMockLockedUsers = (centerLat, centerLng) => {
-  return Array.from({ length: 12 }).map((_, i) => {
-    const latOffset = (Math.random() - 0.5) * 0.015;
-    const lngOffset = (Math.random() - 0.5) * 0.015;
+const MOCK_NAMES = ["Rohan", "Sneha", "Aditya", "Isha", "Vikram", "Anjali", "Karan", "Pooja", "Arjun", "Tanvi", "Siddharth", "Nisha", "Rahul", "Mehak", "Yash", "Riya"];
+const MOCK_AVATARS = [
+  "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix",
+  "https://api.dicebear.com/7.x/avataaars/svg?seed=Aria",
+  "https://api.dicebear.com/7.x/avataaars/svg?seed=Jack",
+  "https://api.dicebear.com/7.x/avataaars/svg?seed=Maya",
+  "https://api.dicebear.com/7.x/avataaars/svg?seed=Leo",
+  "https://api.dicebear.com/7.x/avataaars/svg?seed=Zoe",
+  "https://api.dicebear.com/7.x/avataaars/svg?seed=Toby",
+  "https://api.dicebear.com/7.x/avataaars/svg?seed=Luna"
+];
+
+const generateSmartMockUsers = (centerLat, centerLng, realCount) => {
+  // Goal: Maintain at least 15 users on the map for a "busy" feel
+  const targetTotal = 15;
+  const needed = Math.max(0, targetTotal - realCount);
+  
+  if (needed === 0) return [];
+
+  return Array.from({ length: needed }).map((_, i) => {
+    const latOffset = (Math.random() - 0.5) * 0.02;
+    const lngOffset = (Math.random() - 0.5) * 0.02;
+    const name = MOCK_NAMES[i % MOCK_NAMES.length];
+    const avatar = MOCK_AVATARS[i % MOCK_AVATARS.length];
+    
     return {
-      id: `mock_locked_${i}`,
+      id: `mock_gen_${i}`,
       lat: centerLat + latOffset,
       lng: centerLng + lngOffset,
-      avatar: `https://i.pravatar.cc/150?u=locked${i}`,
-      name: `Hidden Profile`,
-      isLocked: true,
-      isMock: true
+      avatar: avatar,
+      name: name,
+      profession: "Student",
+      isLocked: true, // Mock users are always locked to encourage Premium
+      isMock: true,
+      activity: "Nearby"
     };
   });
 };
@@ -60,8 +83,17 @@ const MapPage = () => {
   const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
 
+  const realNearby = useMemo(() => {
+    return nearbyUsers.filter(u => u.id !== currentUser?.id);
+  }, [nearbyUsers, currentUser?.id]);
 
-  const mockLockedUsers = useMemo(() => generateMockLockedUsers(CENTER_POS[0], CENTER_POS[1]), []);
+  const mockUsers = useMemo(() => {
+    return generateSmartMockUsers(CENTER_POS[0], CENTER_POS[1], realNearby.length);
+  }, [realNearby.length]);
+
+  const allMapUsers = useMemo(() => {
+    return [...realNearby, ...mockUsers];
+  }, [realNearby, mockUsers]);
 
   const handlePaymentSuccess = () => {
     setIsPremium(true);
@@ -89,9 +121,6 @@ const MapPage = () => {
     iconSize: [60, 60],
     iconAnchor: [30, 30]
   }), []);
-
-  const visibleNearby = nearbyUsers.filter(u => u.id !== currentUser?.id);
-  const allMapUsers = [...visibleNearby, ...mockLockedUsers];
 
   return (
     <div className="map-page-container">
