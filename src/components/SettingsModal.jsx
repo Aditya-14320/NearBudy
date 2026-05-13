@@ -20,11 +20,13 @@ const SettingsModal = ({ isOpen, onClose }) => {
   const settings = currentUser.settings || { nearbyAlerts: true, waves: true, profileViews: true };
 
   const handleGhostToggle = async () => {
+    /*
     const isPremiumActive = currentUser?.premiumUntil && currentUser.premiumUntil > Date.now();
     if (!isPremiumActive) {
       setIsPremiumModalOpen(true);
       return;
     }
+    */
     try {
       const newGhostState = !currentUser.ghostMode;
       await updateDoc(doc(db, "users", currentUser.id), { ghostMode: newGhostState });

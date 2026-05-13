@@ -150,26 +150,7 @@ const Home = () => {
           <Sparkles size={24} strokeWidth={1.5} className="banner-sparkle" />
         </div>
 
-        <div className="action-cards-row">
-          <div className="action-card outline-card" onClick={() => setIsPremiumModalOpen(true)}>
-            <div className="action-icon-bg boost-bg">
-              <Zap size={20} strokeWidth={1.5} color="white" fill="white" />
-            </div>
-            <div className="action-text">
-              <h4>Boost</h4>
-              <p>10x views • ₹19</p>
-            </div>
-          </div>
-          <div className="action-card outline-card" onClick={() => setIsPremiumModalOpen(true)}>
-            <div className="action-icon-bg pro-bg">
-              <Crown size={20} strokeWidth={1.5} color="white" />
-            </div>
-            <div className="action-text">
-              <h4>Go Pro</h4>
-              <p>From ₹29/wk</p>
-            </div>
-          </div>
-        </div>
+        {/* Action cards removed for Play Store release */}
 
         <div className="suggested-section-new">
           <div className="section-header">
@@ -192,7 +173,7 @@ const Home = () => {
                 }}>
                   <img src={getThumbnailUrl(user.avatar, 300)} alt={user.name} />
                   <div className="card-overlay">
-                    <h4>{user.isLocked && !currentUser?.isPremium ? "Hidden" : `${user.name}, ${user.age || 21}`}</h4>
+                    <h4>{user.name}, {user.age || 21}</h4>
                   </div>
                 </div>
                 <button className="skip-user-btn" onClick={(e) => {

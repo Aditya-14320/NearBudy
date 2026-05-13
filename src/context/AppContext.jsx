@@ -366,6 +366,7 @@ export const AppProvider = ({ children }) => {
     const isPremium = currentUser.isPremium || (currentUser.premiumUntil && currentUser.premiumUntil > Date.now());
     let recentRequests = currentUser.requestHistory || [];
     
+    /* 
     if (!isPremium) {
       const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
       recentRequests = recentRequests.filter(timestamp => timestamp > twentyFourHoursAgo);
@@ -375,6 +376,7 @@ export const AppProvider = ({ children }) => {
         return;
       }
     }
+    */
 
     try {
       const batch = writeBatch(db);

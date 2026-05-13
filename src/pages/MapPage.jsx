@@ -14,11 +14,7 @@ const CENTER_POS = [28.6304, 77.2177];
 
 const UserMarker = memo(({ user, isPremium, onClick }) => {
   const icon = useMemo(() => {
-    const isHidden = user.isLocked && !isPremium;
-    const lockSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`;
-    const html = isHidden 
-      ? `<div class="user-pin locked"><img src="${getThumbnailUrl(user.avatar, 60)}" alt="Locked User" /><div class="lock-icon-overlay">${lockSvg}</div></div>`
-      : `<div class="user-pin"><img src="${getThumbnailUrl(user.avatar, 60)}" alt="User" /></div>`;
+    const html = `<div class="user-pin"><img src="${getThumbnailUrl(user.avatar, 60)}" alt="User" /></div>`;
 
     return L.divIcon({
       className: 'custom-leaflet-icon',
@@ -69,7 +65,7 @@ const generateSmartMockUsers = (centerLat, centerLng, realCount) => {
       avatar: avatar,
       name: name,
       profession: "Student",
-      isLocked: true, // Mock users are always locked to encourage Premium
+      isLocked: false, // Mock users are now unlocked for Play Store release
       isMock: true,
       activity: "Nearby"
     };
@@ -100,12 +96,8 @@ const MapPage = () => {
   };
 
   const handleUserClick = useCallback((user) => {
-    if (user.isLocked && !isPremium) {
-      setIsPremiumModalOpen(true);
-    } else {
-      setSelectedUser(user);
-    }
-  }, [isPremium, setIsPremiumModalOpen, setSelectedUser]);
+    setSelectedUser(user);
+  }, [setSelectedUser]);
 
   const myLocationIcon = useMemo(() => L.divIcon({
     className: 'custom-leaflet-icon',
@@ -172,7 +164,7 @@ const MapPage = () => {
               <img src={getThumbnailUrl(allMapUsers[0].avatar, 100)} alt={allMapUsers[0].name} />
             </div>
             <div className="card-info">
-              <h4>{allMapUsers[0].isLocked && !isPremium ? "Hidden User" : `${allMapUsers[0].name}, ${allMapUsers[0].age || 23}`}</h4>
+              <h4>{allMapUsers[0].name}, {allMapUsers[0].age || 23}</h4>
               <p>{allMapUsers[0].profession || "NearBudy"} • Nearby</p>
             </div>
           </div>

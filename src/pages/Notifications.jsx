@@ -50,10 +50,12 @@ const Notifications = () => {
 
 
     
+    /*
     if (!isPremium) {
       setIsPremiumModalOpen(true);
       return;
     }
+    */
 
     if (notif.fromUser?.id) {
       const fullUser = nearbyUsers.find(u => u.id === notif.fromUser.id);
@@ -120,7 +122,7 @@ const Notifications = () => {
             notifications.map(notif => {
 
               const isIdentityAlert = notif.type === 'view' || notif.type === 'wave';
-              const canSeeIdentity = isPremium && notif.fromUser;
+              const canSeeIdentity = notif.fromUser; // Unlocked for Play Store release
 
               return (
                 <div 
@@ -144,14 +146,7 @@ const Notifications = () => {
                     <span>{timeAgo(notif.timestamp)}</span>
                   </div>
                   
-                  {!isPremium && isIdentityAlert && (
-                    <button className="btn-accent" style={{ padding: '6px 12px', fontSize: '12px', borderRadius: '12px', marginLeft: 'auto' }} onClick={(e) => {
-                      e.stopPropagation();
-                      setIsPremiumModalOpen(true);
-                    }}>
-                      Unlock
-                    </button>
-                  )}
+                  {/* Unlock button removed for Play Store release */}
                 </div>
               );
             })

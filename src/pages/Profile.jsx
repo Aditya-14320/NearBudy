@@ -114,23 +114,7 @@ const Profile = () => {
         </div>
 
         <div className="profile-actions-list">
-          {!isActuallyPremium ? (
-            <div className="premium-banner-card" onClick={() => setIsPremiumModalOpen(true)}>
-              <Crown size={30} strokeWidth={1.5} className="premium-crown-icon" />
-              <div className="premium-banner-text">
-                <h3>Get Nearby Pro</h3>
-                <p>Unlock everyone around you</p>
-              </div>
-            </div>
-          ) : (
-            <div className="premium-banner-card active" onClick={() => setIsPremiumModalOpen(true)}>
-              <Crown size={28} className="premium-crown-icon" />
-              <div className="premium-banner-text">
-                <h3>Nearby Pro Active</h3>
-                <p>You have unlimited access</p>
-              </div>
-            </div>
-          )}
+          {/* Premium banner removed for Play Store release */}
 
           <div className="invite-banner-card" onClick={handleShare}>
             <div className="invite-icon-box">
