@@ -8,6 +8,13 @@ import { Capacitor } from '@capacitor/core';
 /* eslint-disable react-refresh/only-export-components */
 const AppContext = createContext();
 
+// Add your email here to get lifetime full access (Premium)
+const APP_OWNERS = [
+  'adityadwivedi14320@gmail.com',
+  'nearbudy0@gmail.com',
+  'admin@nearbudy.com'
+];
+
 export const AppProvider = ({ children }) => {
   // Global Data
   const [currentUser, setCurrentUser] = useState(null);
@@ -36,15 +43,17 @@ export const AppProvider = ({ children }) => {
         // Fetch profile from Firestore
         const docRef = doc(db, "users", user.uid);
         const docSnap = await getDoc(docRef);
+        
+        let userData = null;
         if (docSnap.exists()) {
-          setCurrentUser({ id: docSnap.id, ...docSnap.data() });
+          userData = { id: docSnap.id, ...docSnap.data() };
         } else {
           const guestId = Math.floor(1000 + Math.random() * 9000);
           const guestName = user.displayName || `Guest_${guestId}`;
           const guestAvatar = user.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${guestName}`;
           const referralCode = `NB${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
           
-          const guestData = {
+          userData = {
             id: user.uid,
             name: guestName,
             username: user.displayName ? user.displayName.toLowerCase().replace(/\s+/g, '') : `guest_${guestId}`,
@@ -56,9 +65,16 @@ export const AppProvider = ({ children }) => {
             lng: 77.2177,
             createdAt: serverTimestamp()
           };
-          await setDoc(doc(db, "users", user.uid), guestData);
-          setCurrentUser(guestData);
+          await setDoc(doc(db, "users", user.uid), userData);
         }
+
+        // Apply Owner Bypass (Lifetime Premium)
+        if (user.email && APP_OWNERS.includes(user.email)) {
+          userData.isPremium = true;
+          userData.isOwner = true;
+        }
+        
+        setCurrentUser(userData);
       } else {
         setCurrentUser(null);
       }
