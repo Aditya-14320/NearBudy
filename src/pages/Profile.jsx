@@ -11,7 +11,7 @@ import { getOptimizedProfileUrl } from '../utils/cloudinary';
 import './Profile.css';
 
 const Profile = () => {
-  const { currentUser, upgradeAccount } = useAppContext();
+  const { currentUser, upgradeAccount, chats, requests, notifications } = useAppContext();
   const navigate = useNavigate();
   
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -85,10 +85,28 @@ const Profile = () => {
           
           <h3 className="profile-name-new">
             {currentUser.name}{currentUser.age ? `, ${currentUser.age}` : ''}
+            {currentUser.isOwner && <span className="owner-badge">✓</span>}
           </h3>
           <p className="profile-branch-new">
             {currentUser.profession}
           </p>
+
+          <div className="profile-stats-row">
+            <div className="stat-box">
+              <span className="stat-value">{chats.length}</span>
+              <span className="stat-label">Friends</span>
+            </div>
+            <div className="stat-divider"></div>
+            <div className="stat-box">
+              <span className="stat-value">{notifications.filter(n => n.type === 'view').length}</span>
+              <span className="stat-label">Views</span>
+            </div>
+            <div className="stat-divider"></div>
+            <div className="stat-box">
+              <span className="stat-value">{notifications.filter(n => n.type === 'wave').length}</span>
+              <span className="stat-label">Waves</span>
+            </div>
+          </div>
 
           <button className="btn-edit-profile-capsule" onClick={() => setIsEditModalOpen(true)}>
             <Edit2 size={18} strokeWidth={1.5} /> Edit profile
@@ -120,17 +138,26 @@ const Profile = () => {
             </div>
             <div className="invite-banner-text">
               <h3>Grow Your Circle</h3>
-              <p>Invite friends to NearBudy</p>
+              <p>Code: <span className="referral-code-pill">{currentUser.referralCode}</span></p>
             </div>
             <Share2 size={20} className="share-icon-right" />
           </div>
 
           <div className="menu-list-container">
             <div className="menu-list-item" onClick={() => navigate('/notifications')}>
-              <span>Connection requests</span>
+              <div className="menu-item-content">
+                <span>Connection requests</span>
+                {requests.length > 0 && <span className="menu-badge">{requests.length}</span>}
+              </div>
+            </div>
+            <div className="menu-list-item" onClick={() => navigate('/connections')}>
+              <div className="menu-item-content">
+                <span>My Circle</span>
+                {chats.length > 0 && <span className="menu-badge gray">{chats.length}</span>}
+              </div>
             </div>
             <div className="menu-list-item" onClick={() => navigate('/notifications')}>
-              <span>Notifications</span>
+              <span>Activity Alerts</span>
             </div>
           </div>
         </div>

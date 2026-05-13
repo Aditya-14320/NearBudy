@@ -39,7 +39,6 @@ const Home = () => {
       .filter(u => {
         if (u.id === currentUser.id) return false;
         if (matchedIds.includes(u.id)) return false;
-        if (requestedIds.includes(u.id)) return false;
         
         // Hide skipped users for 24h
         const skipTime = skippedUsers[u.id];

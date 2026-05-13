@@ -6,6 +6,7 @@ import Home from './pages/Home';
 import MapPage from './pages/MapPage';
 import Profile from './pages/Profile';
 import Notifications from './pages/Notifications';
+import Connections from './pages/Connections';
 import ChatScreen from './pages/ChatScreen';
 import ChatsPage from './pages/ChatsPage';
 import PrivacyPolicy from './pages/Policy';
@@ -30,6 +31,7 @@ function App() {
           <Route path="/chats" element={<ChatsPage />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/notifications" element={<Notifications />} />
+          <Route path="/connections" element={<Connections />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
