@@ -97,9 +97,6 @@ const Login = () => {
           <span className="dot">•</span>
           <span onClick={() => navigate('/privacy')}>Privacy Policy</span>
         </div>
-        <button onClick={nukeDatabase} style={{ background: 'transparent', border: '1px solid #ff4444', color: '#ff4444', fontSize: '10px', marginTop: '20px', padding: '4px 8px', borderRadius: '4px', opacity: 0.5 }}>
-          NUKE DB (ADMIN)
-        </button>
       </div>
     </div>
   );

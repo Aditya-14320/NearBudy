@@ -654,18 +654,7 @@ export const AppProvider = ({ children }) => {
       markAsSkipped,
       deleteAccount,
       upgradeAccount,
-      checkUsernameUnique,
-      nukeDatabase: async () => {
-        const cols = ['users', 'chats', 'requests', 'notifications'];
-        for (const col of cols) {
-          const snap = await getDocs(collection(db, col));
-          for (const d of snap.docs) {
-            await deleteDoc(doc(db, col, d.id));
-          }
-        }
-        alert("Database wiped successfully!");
-        window.location.reload();
-      }
+      checkUsernameUnique
     }}>
       {!loadingAuth && children}
     </AppContext.Provider>
