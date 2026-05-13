@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { X, Check, Camera, Eye } from 'lucide-react';
 import { db } from '../firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, setDoc } from 'firebase/firestore';
 import { useAppContext } from '../context/AppContext';
 import ProfilePreviewModal from './ProfilePreviewModal';
 import { AVATAR_PRESETS } from '../utils/avatars';
-import { uploadToCloudinary } from '../utils/cloudinary';
+import { uploadToCloudinary, getThumbnailUrl } from '../utils/cloudinary';
 import './EditProfileModal.css';
 
 const EditProfileModal = ({ isOpen, onClose }) => {
@@ -162,7 +162,7 @@ const EditProfileModal = ({ isOpen, onClose }) => {
         interests: Array.isArray(formData.interests) ? formData.interests.join(', ') : (formData.interests || '')
       };
       
-      await updateDoc(doc(db, "users", currentUser.id), dataToSave);
+      await setDoc(doc(db, "users", currentUser.id), dataToSave, { merge: true });
       
       setCurrentUser(prev => ({
         ...prev,
@@ -232,6 +232,11 @@ const EditProfileModal = ({ isOpen, onClose }) => {
           </div>
 
           <div className="edit-content">
+            {currentUser?.isGuest && (
+              <div className="guest-edit-warning">
+                ⚠️ You are in Guest Mode. Connect your Google account in settings to save your profile permanently.
+              </div>
+            )}
             <form className="edit-form" onSubmit={handleSave}>
               
               <h3 className="section-title">👤 Basic Info</h3>
@@ -245,7 +250,7 @@ const EditProfileModal = ({ isOpen, onClose }) => {
                   hidden 
                 />
                 <div className="avatar-preview-wrapper" onClick={() => fileInputRef.current.click()}>
-                  <img src={formData.avatar || '/avatars/neutral.png'} alt="Avatar" />
+                  <img src={getThumbnailUrl(formData.avatar || '/avatars/neutral.png', 150)} alt="Avatar" />
                   <div className="camera-icon-badge">
                     {uploadingImage ? <div className="spinner" style={{width: 16, height: 16, borderWidth: 2}}></div> : <Camera size={16} />}
                   </div>

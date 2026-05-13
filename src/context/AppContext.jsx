@@ -1,6 +1,7 @@
 import { createContext, useState, useContext, useEffect, useRef } from 'react';
-import { auth, db } from '../firebase';
-import { doc, getDoc, collection, onSnapshot, addDoc, updateDoc, deleteDoc, setDoc, query, where, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { auth, db, setPersistence, browserLocalPersistence } from '../firebase';
+import { doc, getDoc, collection, onSnapshot, addDoc, updateDoc, deleteDoc, setDoc, query, where, serverTimestamp, writeBatch, getDocs } from 'firebase/firestore';
+import { deleteUser, signInAnonymously, linkWithCredential, GoogleAuthProvider } from 'firebase/auth';
 import { Capacitor } from '@capacitor/core';
 // Capacitor plugins will be imported dynamically to prevent web build errors
 
@@ -17,6 +18,7 @@ export const AppProvider = ({ children }) => {
   const [chats, setChats] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const notifiedRefs = useRef(new Set());
+  const signingInAsGuest = useRef(false);
   const [sessionViews, setSessionViews] = useState(new Set());
   const [skippedUsers, setSkippedUsers] = useState(() => {
     try {
@@ -28,18 +30,34 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
+        // Save login type
+        localStorage.setItem('nb_auth_type', user.isAnonymous ? 'guest' : 'google');
+        
         // Fetch profile from Firestore
         const docRef = doc(db, "users", user.uid);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-          setCurrentUser(docSnap.data());
+          setCurrentUser({ id: docSnap.id, ...docSnap.data() });
         } else {
-          setCurrentUser({
+          const guestId = Math.floor(1000 + Math.random() * 9000);
+          const guestName = user.displayName || `Guest_${guestId}`;
+          const guestAvatar = user.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${guestName}`;
+          const referralCode = `NB${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+          
+          const guestData = {
             id: user.uid,
-            name: "New User",
-            avatar: 'https://i.pravatar.cc/150?u=' + user.uid,
-            isPremium: false
-          });
+            name: guestName,
+            username: user.displayName ? user.displayName.toLowerCase().replace(/\s+/g, '') : `guest_${guestId}`,
+            avatar: guestAvatar,
+            isGuest: user.isAnonymous,
+            isPremium: false,
+            referralCode: referralCode,
+            lat: 28.6304,
+            lng: 77.2177,
+            createdAt: serverTimestamp()
+          };
+          await setDoc(doc(db, "users", user.uid), guestData);
+          setCurrentUser(guestData);
         }
       } else {
         setCurrentUser(null);
@@ -49,8 +67,33 @@ export const AppProvider = ({ children }) => {
     return unsubscribe;
   }, []);
 
+  // Live location tracking
+  useEffect(() => {
+    if (!currentUser || !currentUser.id) return;
+
+    const watchId = navigator.geolocation.watchPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        // Only update if distance moved is significant (e.g. > 10m) to save DB writes
+        const dist = getRawDistance(currentUser.lat, currentUser.lng, latitude, longitude);
+        if (dist > 0.01) { // 10 meters
+           try {
+             await updateDoc(doc(db, "users", currentUser.id), {
+               lat: latitude,
+               lng: longitude
+             });
+           } catch (e) { console.error("Live location update failed", e); }
+        }
+      },
+      (err) => console.error("Location watch error", err),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [currentUser?.id]); // Only re-run if ID changes
+
   // Haversine distance calc
-  const getDistance = (lat1, lon1, lat2, lon2) => {
+  const getDistanceFormatted = (lat1, lon1, lat2, lon2) => {
     if (!lat1 || !lon1 || !lat2 || !lon2) return "Nearby";
     const R = 6371; // km
     const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -59,17 +102,32 @@ export const AppProvider = ({ children }) => {
               Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
               Math.sin(dLon/2) * Math.sin(dLon/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    const d = R * c;
-    if (d < 1) return Math.floor(d * 1000) + "m";
+    const d = R * c; // distance in km
+    
+    const meters = d * 1000;
+    if (meters < 50) return "Very Close";
+    if (meters < 300) return `${Math.floor(meters)}m`;
+    if (meters < 1000) return "Nearby";
     return d.toFixed(1) + "km";
+  };
+
+  const getRawDistance = (lat1, lon1, lat2, lon2) => {
+    if (!lat1 || !lon1 || !lat2 || !lon2) return 999999;
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
   };
 
   useEffect(() => {
     // Listen to all real users in the database
     const unsubscribeUsers = onSnapshot(collection(db, "users"), (snapshot) => {
-      const realUsers = snapshot.docs.map(doc => {
+      let realUsers = snapshot.docs.map(doc => {
         const data = doc.data();
-        
         const userLat = data.lat || 28.6304;
         const userLng = data.lng || 77.2177;
 
@@ -78,10 +136,17 @@ export const AppProvider = ({ children }) => {
           id: doc.id,
           lat: userLat,
           lng: userLng,
-          distance: currentUser ? getDistance(currentUser.lat, currentUser.lng, userLat, userLng) : "Nearby",
+          rawDistance: currentUser ? getRawDistance(currentUser.lat, currentUser.lng, userLat, userLng) : 999999,
+          distance: currentUser ? getDistanceFormatted(currentUser.lat, currentUser.lng, userLat, userLng) : "Nearby",
           isLocked: false
         };
       });
+
+      // Filter out current user and sort by distance
+      realUsers = realUsers
+        .filter(u => u.id !== currentUser?.id)
+        .sort((a, b) => a.rawDistance - b.rawDistance);
+
       setNearbyUsers(realUsers);
     });
 
@@ -89,7 +154,7 @@ export const AppProvider = ({ children }) => {
   }, [currentUser]);
 
   useEffect(() => {
-    if (!currentUser) {
+    if (!currentUser || !currentUser.id) {
       setTimeout(() => {
         setRequests([]);
         setChats([]);
@@ -271,6 +336,11 @@ export const AppProvider = ({ children }) => {
   // Actions
   const sendRequest = async (targetUser) => {
     if (!currentUser) return;
+    
+    if (currentUser.isGuest) {
+      alert("Guests cannot send requests. Please upgrade to a Google account to chat!");
+      return;
+    }
 
     if (sentRequests.some(r => r.toId === targetUser.id)) {
       alert("You already sent a request to this user.");
@@ -394,6 +464,11 @@ export const AppProvider = ({ children }) => {
 
   const createQuickChat = async (targetUser) => {
     if (!currentUser) return null;
+
+    if (currentUser.isGuest) {
+      alert("Guests cannot use Quick Chat. Please upgrade to a Google account!");
+      return null;
+    }
     
     const chatId = [currentUser.id, targetUser.id].sort().join('_');
     const existingChat = chats.find(c => c.id === chatId);
@@ -422,6 +497,7 @@ export const AppProvider = ({ children }) => {
   };
 
   const sendNotification = async (toUserId, type, message, fromUserId = null, fromUserObj = null) => {
+    if (currentUser?.isGuest && type !== 'nearby') return; // Guests can't send waves/views
     try {
       await addDoc(collection(db, "notifications"), {
         userId: toUserId,
@@ -438,6 +514,7 @@ export const AppProvider = ({ children }) => {
   };
 
   const markNotificationsRead = async () => {
+    if (!currentUser) return;
     const unread = notifications.filter(n => !n.read);
     if (unread.length === 0) return;
     
@@ -449,6 +526,83 @@ export const AppProvider = ({ children }) => {
       await batch.commit();
     } catch (e) {
       console.error("Error marking notifications read:", e);
+    }
+  };
+
+  const upgradeAccount = async (credential) => {
+    if (!auth.currentUser) return false;
+    try {
+      const result = await linkWithCredential(auth.currentUser, credential);
+      const user = result.user;
+      
+      // Mark as no longer guest in Firestore
+      await updateDoc(doc(db, "users", user.uid), {
+        isGuest: false,
+        name: user.displayName || currentUser.name,
+        avatar: user.photoURL || currentUser.avatar
+      });
+      
+      setCurrentUser(prev => ({ ...prev, isGuest: false }));
+      return true;
+    } catch (e) {
+      console.error("Upgrade Account Error:", e);
+      return false;
+    }
+  };
+
+  const checkUsernameUnique = async (username) => {
+    if (!username) return false;
+    try {
+      const q = query(collection(db, "users"), where("username", "==", username.toLowerCase()));
+      const snap = await getDocs(q);
+      return snap.empty;
+    } catch (e) {
+      console.error("Username check error:", e);
+      return false;
+    }
+  };
+
+  const deleteAccount = async () => {
+    if (!currentUser) return;
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const batch = writeBatch(db);
+      
+      // 1. Delete user document
+      batch.delete(doc(db, "users", currentUser.id));
+      
+      // 2. Delete related notifications
+      const qNotifs = query(collection(db, "notifications"), where("userId", "==", currentUser.id));
+      const notifSnap = await getDocs(qNotifs);
+      notifSnap.forEach(d => batch.delete(doc(db, "notifications", d.id)));
+
+      // 3. Delete sent requests
+      const qSent = query(collection(db, "requests"), where("fromId", "==", currentUser.id));
+      const sentSnap = await getDocs(qSent);
+      sentSnap.forEach(d => batch.delete(doc(db, "requests", d.id)));
+
+      // 4. Delete received requests
+      const qRec = query(collection(db, "requests"), where("toId", "==", currentUser.id));
+      const recSnap = await getDocs(qRec);
+      recSnap.forEach(d => batch.delete(doc(db, "requests", d.id)));
+
+      await batch.commit();
+
+      // 5. Delete Auth User
+      await deleteUser(user);
+      
+      setCurrentUser(null);
+      return true;
+    } catch (e) {
+      console.error("Error deleting account:", e);
+      if (e.code === 'auth/requires-recent-login') {
+        alert("Please log out and log in again to delete your account for security reasons.");
+      } else {
+        alert("Failed to delete account. Please try again.");
+      }
+      return false;
     }
   };
 
@@ -497,7 +651,21 @@ export const AppProvider = ({ children }) => {
       sessionViews,
       markAsViewed,
       skippedUsers,
-      markAsSkipped
+      markAsSkipped,
+      deleteAccount,
+      upgradeAccount,
+      checkUsernameUnique,
+      nukeDatabase: async () => {
+        const cols = ['users', 'chats', 'requests', 'notifications'];
+        for (const col of cols) {
+          const snap = await getDocs(collection(db, col));
+          for (const d of snap.docs) {
+            await deleteDoc(doc(db, col, d.id));
+          }
+        }
+        alert("Database wiped successfully!");
+        window.location.reload();
+      }
     }}>
       {!loadingAuth && children}
     </AppContext.Provider>

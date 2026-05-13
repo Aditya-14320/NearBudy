@@ -8,6 +8,8 @@ import Profile from './pages/Profile';
 import Notifications from './pages/Notifications';
 import ChatScreen from './pages/ChatScreen';
 import ChatsPage from './pages/ChatsPage';
+import PrivacyPolicy from './pages/Policy';
+import Terms from './pages/Terms';
 import Layout from './components/Layout';
 
 function App() {
@@ -18,6 +20,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/profile-setup" element={<ProfileSetup />} />
         <Route path="/chat/:id" element={<ChatScreen />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<Terms />} />
         
         {/* Protected/Main App Routes wrapped in Layout */}
         <Route element={<Layout />}>

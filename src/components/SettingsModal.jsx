@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, MapPin, ChevronRight, Bell, Hand, Eye, Shield, HelpCircle, LogOut } from 'lucide-react';
+import { X, MapPin, ChevronRight, Bell, Hand, Eye, Shield, HelpCircle, LogOut, FileText, Trash2 } from 'lucide-react';
 import { auth, db } from '../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useAppContext } from '../context/AppContext';
@@ -9,10 +9,11 @@ import './SettingsModal.css';
 import { useNavigate } from 'react-router-dom';
 
 const SettingsModal = ({ isOpen, onClose }) => {
-  const { currentUser, setCurrentUser } = useAppContext();
+  const { currentUser, setCurrentUser, deleteAccount } = useAppContext();
   const navigate = useNavigate();
   const [isBlockedModalOpen, setIsBlockedModalOpen] = useState(false);
   const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   if (!isOpen || !currentUser) return null;
 
@@ -50,6 +51,22 @@ const SettingsModal = ({ isOpen, onClose }) => {
     } catch (error) {
       console.error("Logout failed", error);
     }
+  };
+
+  const handleDeleteAccount = async () => {
+    const confirmed = window.confirm("⚠️ Are you absolutely sure? This will permanently delete your account, your profile, and all your data. This action CANNOT be undone.");
+    if (!confirmed) return;
+
+    const doubleConfirmed = window.confirm("Final Warning: Do you want to permanently delete all your data?");
+    if (!doubleConfirmed) return;
+
+    setIsDeleting(true);
+    const success = await deleteAccount();
+    if (success) {
+      navigate('/login');
+      onClose();
+    }
+    setIsDeleting(false);
   };
 
   const handlePaymentSuccess = (newExpiry) => {
@@ -114,6 +131,20 @@ const SettingsModal = ({ isOpen, onClose }) => {
               </div>
               <ChevronRight size={20} className="chevron" />
             </div>
+            <div className="settings-item" onClick={() => { onClose(); navigate('/privacy'); }}>
+              <div className="item-left">
+                <div className="icon-wrapper" style={{background: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8'}}><Shield size={20} /></div>
+                <span>Privacy Policy</span>
+              </div>
+              <ChevronRight size={20} className="chevron" />
+            </div>
+            <div className="settings-item" onClick={() => { onClose(); navigate('/terms'); }}>
+              <div className="item-left">
+                <div className="icon-wrapper" style={{background: 'rgba(168, 85, 247, 0.1)', color: '#a855f7'}}><FileText size={20} /></div>
+                <span>Terms & Conditions</span>
+              </div>
+              <ChevronRight size={20} className="chevron" />
+            </div>
             <div className="settings-item">
               <div className="item-left">
                 <div className="icon-wrapper" style={{background: 'var(--bg-tertiary)'}}><HelpCircle size={20} /></div>
@@ -123,10 +154,16 @@ const SettingsModal = ({ isOpen, onClose }) => {
             </div>
           </div>
 
-          <button className="logout-btn" onClick={handleLogout}>
-            <LogOut size={20} />
-            <span>Log Out</span>
-          </button>
+          <div className="danger-zone">
+            <button className="logout-btn" onClick={handleLogout} disabled={isDeleting}>
+              <LogOut size={20} />
+              <span>Log Out</span>
+            </button>
+            <button className="delete-account-btn" onClick={handleDeleteAccount} disabled={isDeleting}>
+              <Trash2 size={20} />
+              <span>{isDeleting ? 'Deleting...' : 'Delete Account'}</span>
+            </button>
+          </div>
         </div>
       </div>
 

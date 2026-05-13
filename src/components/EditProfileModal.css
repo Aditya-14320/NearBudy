@@ -74,6 +74,17 @@
   gap: 20px;
 }
 
+.guest-edit-warning {
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  color: #fbbf24;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
 /* Sections */
 .section-title {
   font-size: 15px;

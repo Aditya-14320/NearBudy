@@ -4,6 +4,7 @@ import { Check, X, ArrowLeft, Eye, Hand, MapPin, Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import PremiumModal from '../components/PremiumModal';
 import ProfilePreviewModal from '../components/ProfilePreviewModal';
+import { getThumbnailUrl } from '../utils/cloudinary';
 import './Notifications.css';
 
 const Notifications = () => {
@@ -93,7 +94,7 @@ const Notifications = () => {
             requests.map(req => (
               <div key={req.id} className="request-card animate-slide-up">
                 <div className="req-user-info">
-                  <img src={req.fromUser?.avatar} alt="Avatar" className="req-avatar" />
+                  <img src={getThumbnailUrl(req.fromUser?.avatar, 100)} alt="Avatar" className="req-avatar" />
                   <div className="req-details">
                     <h4>{req.fromUser?.name}</h4>
                     <p>{req.fromUser?.profession}</p>
@@ -129,7 +130,7 @@ const Notifications = () => {
                 >
                   <div className="alert-icon-wrapper">
                     {canSeeIdentity ? (
-                      <img src={notif.fromUser.avatar} alt="Avatar" style={{width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover'}} />
+                      <img src={getThumbnailUrl(notif.fromUser.avatar, 100)} alt="Avatar" style={{width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover'}} />
                     ) : (
                       getIconForType(notif.type)
                     )}

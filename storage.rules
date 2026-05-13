@@ -17,10 +17,7 @@ service firebase.storage {
     }
 
     // Chat images
-    match /chats/{chatId}/{fileName} {
-      // In a production app, you'd want to check if the user is in the chat
-      // This requires getting the chat doc from Firestore, which Storage rules can do
-      // but it's more complex. For now, we'll ensure they are at least signed in.
+    match /chat_images/{chatId}/{fileName} {
       allow read: if isSignedIn();
       allow write: if isSignedIn(); 
     }

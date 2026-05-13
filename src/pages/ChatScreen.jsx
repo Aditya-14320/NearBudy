@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef, Fragment, useMemo } from 'react';
-import { ArrowLeft, Image as ImageIcon, Send, MoreVertical, Check, CheckCheck, X, Smile } from 'lucide-react';
+import { ArrowLeft, Image as ImageIcon, Send, MoreVertical, Check, CheckCheck, X, Smile, ShieldAlert, Ban } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import { db, storage } from '../firebase';
+import ReportModal from '../components/ReportModal';
 import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, updateDoc, doc, increment } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { getThumbnailUrl } from '../utils/cloudinary';
 import './ChatScreen.css';
 
 const dayLabel = (dateObj) => {
@@ -25,7 +27,7 @@ const dayLabel = (dateObj) => {
 const ChatScreen = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { chats, currentUser, nearbyUsers } = useAppContext();
+  const { chats, currentUser, nearbyUsers, reportUser, blockUser } = useAppContext();
   
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
@@ -33,6 +35,8 @@ const ChatScreen = () => {
   const [imageFile, setImageFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const { chatUser, isOnline, lastActiveText } = useMemo(() => {
     const fallback = { name: "User", avatar: "https://i.pravatar.cc/150" };
     const existingChat = chats.find(c => c.id === id);
@@ -273,6 +277,14 @@ const ChatScreen = () => {
     }
   };
 
+  const handleBlock = async () => {
+    if (window.confirm(`Are you sure you want to block ${chatUser.name}? They will no longer be able to message you.`)) {
+      await blockUser(chatUser);
+      alert("User blocked.");
+      navigate('/chats');
+    }
+  };
+
   // Group by day
   const grouped = [];
   messages.forEach((m) => {
@@ -291,7 +303,7 @@ const ChatScreen = () => {
         
         <div className="chat-header-user">
           <div className="header-avatar-wrapper">
-            <img src={chatUser.avatar} alt="Avatar" className="header-avatar" />
+            <img src={getThumbnailUrl(chatUser.avatar, 100)} alt="Avatar" className="header-avatar" />
             {isOnline && <span className="online-dot-header"></span>}
           </div>
           <div className="header-info">
@@ -307,9 +319,23 @@ const ChatScreen = () => {
           </div>
         </div>
 
-        <button className="icon-btn">
-          <MoreVertical size={22} />
-        </button>
+
+        <div className="header-actions">
+          <button className="icon-btn" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+            <MoreVertical size={22} />
+          </button>
+          
+          {isMenuOpen && (
+            <div className="header-dropdown animate-fade-in">
+              <button className="dropdown-item" onClick={() => { setIsReportModalOpen(true); setIsMenuOpen(false); }}>
+                <ShieldAlert size={18} /> Report User
+              </button>
+              <button className="dropdown-item block" onClick={() => { handleBlock(); setIsMenuOpen(false); }}>
+                <Ban size={18} /> Block User
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="messages-container">
@@ -427,7 +453,14 @@ const ChatScreen = () => {
             <Send size={20} />
           </button>
         </div>
+        <p className="ugc-notice">Keep it respectful. All content is moderated.</p>
       </div>
+
+      <ReportModal 
+        user={chatUser} 
+        isOpen={isReportModalOpen} 
+        onClose={() => setIsReportModalOpen(false)} 
+      />
     </div>
   );
 };

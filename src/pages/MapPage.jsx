@@ -6,6 +6,7 @@ import L from 'leaflet';
 import PremiumModal from '../components/PremiumModal';
 import ProfilePreviewModal from '../components/ProfilePreviewModal';
 import { useAppContext } from '../context/AppContext';
+import { getThumbnailUrl } from '../utils/cloudinary';
 import 'leaflet/dist/leaflet.css';
 import './MapPage.css';
 
@@ -16,8 +17,8 @@ const UserMarker = memo(({ user, isPremium, onClick }) => {
     const isHidden = user.isLocked && !isPremium;
     const lockSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`;
     const html = isHidden 
-      ? `<div class="user-pin locked"><img src="${user.avatar}" alt="Locked User" /><div class="lock-icon-overlay">${lockSvg}</div></div>`
-      : `<div class="user-pin"><img src="${user.avatar}" alt="User" /></div>`;
+      ? `<div class="user-pin locked"><img src="${getThumbnailUrl(user.avatar, 60)}" alt="Locked User" /><div class="lock-icon-overlay">${lockSvg}</div></div>`
+      : `<div class="user-pin"><img src="${getThumbnailUrl(user.avatar, 60)}" alt="User" /></div>`;
 
     return L.divIcon({
       className: 'custom-leaflet-icon',
@@ -140,7 +141,7 @@ const MapPage = () => {
             onClick={() => handleUserClick(visibleNearby[0])}
           >
             <div className="card-avatar">
-              <img src={visibleNearby[0].avatar} alt={visibleNearby[0].name} />
+              <img src={getThumbnailUrl(visibleNearby[0].avatar, 100)} alt={visibleNearby[0].name} />
             </div>
             <div className="card-info">
               <h4>{visibleNearby[0].isLocked && !isPremium ? "Hidden User" : `${visibleNearby[0].name}, ${visibleNearby[0].age || 23}`}</h4>

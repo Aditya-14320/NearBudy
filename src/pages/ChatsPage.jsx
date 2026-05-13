@@ -1,6 +1,7 @@
 import { MessageCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
+import { getThumbnailUrl } from '../utils/cloudinary';
 import './ChatsPage.css';
 
 const ChatsPage = () => {
@@ -47,7 +48,7 @@ const ChatsPage = () => {
               return (
                 <div key={chat.id} className="chat-item" onClick={() => navigate(`/chat/${chat.id}`)}>
                   <div className="chat-avatar-wrapper">
-                    <img src={fullOtherUser.avatar} alt="Avatar" className="chat-avatar" />
+                    <img src={getThumbnailUrl(fullOtherUser.avatar, 80)} alt="Avatar" className="chat-avatar" />
                     {isOnline && <span className="online-dot-list"></span>}
                   </div>
                   <div className="chat-details">

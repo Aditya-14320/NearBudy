@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import ProfilePreviewModal from '../components/ProfilePreviewModal';
 import PremiumModal from '../components/PremiumModal';
+import { getThumbnailUrl } from '../utils/cloudinary';
 import './Home.css';
 
 const Home = () => {
@@ -111,7 +112,11 @@ const Home = () => {
         </div>
         <button className="icon-btn-transparent" onClick={() => navigate('/notifications')} style={{ position: 'relative' }}>
           <Bell size={24} strokeWidth={1.5} />
-          {totalAlerts > 0 && <span className="nav-dot" style={{ top: 2, right: 2 }}></span>}
+          {totalAlerts > 0 && (
+            <span className="unread-badge-premium">
+              {totalAlerts > 9 ? '9+' : totalAlerts}
+            </span>
+          )}
         </button>
       </div>
 
@@ -182,7 +187,7 @@ const Home = () => {
                   markAsViewed(user.id);
                   handleUserClick(user);
                 }}>
-                  <img src={user.avatar} alt={user.name} />
+                  <img src={getThumbnailUrl(user.avatar, 300)} alt={user.name} />
                   <div className="card-overlay">
                     <h4>{user.isLocked && !currentUser?.isPremium ? "Hidden" : `${user.name}, ${user.age || 21}`}</h4>
                   </div>

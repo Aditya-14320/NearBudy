@@ -3,6 +3,7 @@ import { X, UserPlus, Zap, ShieldAlert, Ban, MessageCircle, Hand } from 'lucide-
 import { useAppContext } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 import ReportModal from './ReportModal';
+import { getOptimizedProfileUrl, getThumbnailUrl } from '../utils/cloudinary';
 import './ProfilePreviewModal.css';
 
 const ProfilePreviewModal = ({ user, isOpen, onClose }) => {
@@ -108,7 +109,7 @@ const ProfilePreviewModal = ({ user, isOpen, onClose }) => {
         <button className="preview-close" onClick={onClose}><X size={20} /></button>
 
         <div className="preview-content">
-          <img src={user.avatar} alt={user.name} className="preview-avatar" />
+          <img src={getOptimizedProfileUrl(user.avatar)} alt={user.name} className="preview-avatar" />
           <h2 className="preview-name">{user.name}{user.age ? `, ${user.age}` : ''}</h2>
           <p className="preview-branch">{user.profession}</p>
           

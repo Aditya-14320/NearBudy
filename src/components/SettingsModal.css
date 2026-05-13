@@ -138,20 +138,46 @@
   transform: translateX(20px);
 }
 
-.logout-btn {
+.danger-zone {
+  margin-top: 24px;
+  margin-bottom: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.logout-btn, .delete-account-btn {
   width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 12px;
-  padding: 18px;
-  background: rgba(239, 68, 68, 0.1);
-  color: var(--danger);
+  padding: 16px;
   border: none;
   border-radius: 20px;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   cursor: pointer;
-  margin-top: 12px;
-  margin-bottom: 40px;
+  transition: all 0.2s;
+}
+
+.logout-btn {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.delete-account-btn {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.delete-account-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.delete-account-btn:disabled, .logout-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

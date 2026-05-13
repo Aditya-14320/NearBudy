@@ -3,7 +3,7 @@
   "appName": "NearBudy",
   "webDir": "dist",
   "server": {
-    "hostname": "camchat-ee539.firebaseapp.com",
+    "hostname": "nearbudy-da6b7.firebaseapp.com",
     "androidScheme": "https"
   }
 }
