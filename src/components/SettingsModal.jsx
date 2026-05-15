@@ -161,9 +161,9 @@ const SettingsModal = ({ isOpen, onClose }) => {
               <LogOut size={20} />
               <span>Log Out</span>
             </button>
-            <button className="delete-account-btn" onClick={handleDeleteAccount} disabled={isDeleting}>
+            <button className="delete-account-btn" onClick={() => { onClose(); navigate('/delete-account'); }}>
               <Trash2 size={20} />
-              <span>{isDeleting ? 'Deleting...' : 'Delete Account'}</span>
+              <span>Delete Account</span>
             </button>
           </div>
         </div>
