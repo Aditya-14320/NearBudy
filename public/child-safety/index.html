@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Child Safety Standards | NearBudy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #09090b;
+            --text-color: #fafafa;
+            --accent-color: #38bdf8;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --gradient: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+            --safe-green: #10b981;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding: 24px;
+        }
+
+        .background-blobs {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.12;
+        }
+
+        .blob-1 {
+            width: 400px;
+            height: 400px;
+            background: var(--accent-color);
+            top: -100px;
+            right: -100px;
+        }
+
+        .blob-2 {
+            width: 300px;
+            height: 300px;
+            background: var(--safe-green);
+            bottom: -50px;
+            left: -50px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+        }
+
+        .content-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 32px;
+            padding: 48px;
+            box-shadow: 0 24px 48px rgba(0,0,0,0.4);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            font-weight: 800;
+            font-size: 1.5rem;
+            letter-spacing: -0.05em;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 12px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--safe-green);
+            padding: 6px 12px;
+            border-radius: 100px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        section {
+            margin-bottom: 32px;
+        }
+
+        h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-color);
+        }
+
+        p {
+            color: #a1a1aa;
+            margin-bottom: 20px;
+            font-size: 1.05rem;
+        }
+
+        .prohibit-list {
+            list-style: none;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 24px;
+        }
+
+        .prohibit-list li {
+            position: relative;
+            padding-left: 32px;
+            margin-bottom: 12px;
+            color: #fafafa;
+            font-weight: 500;
+        }
+
+        .prohibit-list li::before {
+            content: '✕';
+            position: absolute;
+            left: 0;
+            color: #ef4444;
+            font-weight: 900;
+        }
+
+        .prohibit-list li:last-child {
+            margin-bottom: 0;
+        }
+
+        .info-box {
+            background: rgba(56, 189, 248, 0.05);
+            border-left: 4px solid var(--accent-color);
+            padding: 20px;
+            border-radius: 0 16px 16px 0;
+            margin-bottom: 32px;
+        }
+
+        .info-box p {
+            margin-bottom: 0;
+            color: #cbd5e1;
+            font-size: 0.95rem;
+        }
+
+        .contact-section {
+            border-top: 1px solid var(--border-color);
+            padding-top: 32px;
+            text-align: center;
+        }
+
+        .email-link {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: opacity 0.2s;
+        }
+
+        .email-link:hover {
+            opacity: 0.8;
+        }
+
+        .footer-date {
+            text-align: center;
+            margin-top: 32px;
+            color: #71717a;
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 640px) {
+            .content-card {
+                padding: 32px 24px;
+            }
+            h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <div class="container">
+        <main class="content-card">
+            <header>
+                <div class="logo">NearBudy</div>
+                <div class="badge">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    Safety Standards
+                </div>
+                <h1>Child Safety Standards</h1>
+            </header>
+
+            <section>
+                <p>NearBudy is committed to preventing child sexual abuse and exploitation (CSAE) on our platform. We maintain a zero-tolerance policy towards any content or behavior that endangers minors.</p>
+            </section>
+
+            <section>
+                <h2>Strict Prohibitions</h2>
+                <ul class="prohibit-list">
+                    <li>Child sexual abuse material (CSAM)</li>
+                    <li>Exploitative or abusive behavior involving minors</li>
+                    <li>Grooming, trafficking, or sexual exploitation</li>
+                    <li>Any content that endangers children</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>Reporting & Enforcement</h2>
+                <p>Users can report inappropriate behavior and content directly within the app. Reported content is reviewed promptly, and accounts violating our policies are removed and reported to relevant authorities where required.</p>
+                
+                <div class="info-box">
+                    <p>NearBudy complies with applicable child safety laws and cooperates fully with law enforcement agencies to ensure a safe community for all.</p>
+                </div>
+            </section>
+
+            <footer class="contact-section">
+                <p style="margin-bottom: 8px;">For safety concerns or inquiries:</p>
+                <a href="mailto:nearbudy0@gmail.com" class="email-link">nearbudy0@gmail.com</a>
+            </footer>
+        </main>
+
+        <p class="footer-date">Last Updated: May 15, 2026</p>
+    </div>
+</body>
+</html>
