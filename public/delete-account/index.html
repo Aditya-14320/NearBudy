@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Account | NearBudy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #09090b;
+            --text-color: #fafafa;
+            --accent-color: #ef4444; /* Red for deletion */
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --gradient: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .background-blobs {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.1;
+        }
+
+        .blob-1 {
+            width: 400px;
+            height: 400px;
+            background: #ef4444;
+            top: -100px;
+            right: -100px;
+        }
+
+        .blob-2 {
+            width: 300px;
+            height: 300px;
+            background: #38bdf8;
+            bottom: -50px;
+            left: -50px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            padding: 24px;
+        }
+
+        .content-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 32px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        .icon-box {
+            width: 64px;
+            height: 64px;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            color: #ef4444;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+        }
+
+        p {
+            color: #a1a1aa;
+            margin-bottom: 32px;
+            font-size: 1rem;
+        }
+
+        .instruction-box {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 24px;
+            text-align: left;
+            margin-bottom: 32px;
+        }
+
+        .instruction-box h2 {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #71717a;
+            margin-bottom: 16px;
+        }
+
+        .details-list {
+            list-style: none;
+        }
+
+        .details-list li {
+            position: relative;
+            padding-left: 28px;
+            margin-bottom: 12px;
+            color: #fafafa;
+            font-size: 0.95rem;
+        }
+
+        .details-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #ef4444;
+            font-weight: bold;
+        }
+
+        .email-link {
+            display: block;
+            background: var(--gradient);
+            color: white;
+            text-decoration: none;
+            padding: 16px;
+            border-radius: 16px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 16px;
+        }
+
+        .email-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3);
+        }
+
+        .secondary-text {
+            font-size: 0.85rem;
+            color: #71717a;
+        }
+
+        .footer-logo {
+            margin-top: 40px;
+            font-weight: 800;
+            font-size: 1.2rem;
+            opacity: 0.5;
+            letter-spacing: -0.05em;
+        }
+
+        svg {
+            stroke-width: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <div class="container">
+        <div class="content-card">
+            <div class="icon-box">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+            </div>
+            <h1>Delete Your Account</h1>
+            <p>To request deletion of your NearBudy account and associated data, please follow the instructions below.</p>
+
+            <div class="instruction-box">
+                <h2>Include in your request:</h2>
+                <ul class="details-list">
+                    <li>Your registered email address</li>
+                    <li>Your username or User ID</li>
+                </ul>
+            </div>
+
+            <a href="mailto:nearbudy0@gmail.com?subject=Account Deletion Request - NearBudy" class="email-link">
+                Request Deletion via Email
+            </a>
+
+            <div class="secondary-text">
+                Your account and data will be permanently deleted within <strong>7 days</strong> of verification.
+            </div>
+        </div>
+
+        <div style="text-align: center;">
+            <div class="footer-logo">NearBudy</div>
+        </div>
+    </div>
+</body>
+</html>
