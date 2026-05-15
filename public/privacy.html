@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy | NearBudy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #09090b;
+            --text-color: #fafafa;
+            --accent-color: #38bdf8;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --gradient: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .background-blobs {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.15;
+        }
+
+        .blob-1 {
+            width: 400px;
+            height: 400px;
+            background: #38bdf8;
+            top: -100px;
+            right: -100px;
+        }
+
+        .blob-2 {
+            width: 300px;
+            height: 300px;
+            background: #a21caf;
+            bottom: -50px;
+            left: -50px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 80px 24px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .logo {
+            font-weight: 800;
+            font-size: 2rem;
+            letter-spacing: -0.05em;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+            display: inline-block;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+        }
+
+        .last-updated {
+            color: #71717a;
+            font-size: 0.9rem;
+        }
+
+        .content-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+
+        section {
+            margin-bottom: 40px;
+        }
+
+        section:last-child {
+            margin-bottom: 0;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--accent-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        h2::before {
+            content: '';
+            display: block;
+            width: 4px;
+            height: 24px;
+            background: var(--gradient);
+            border-radius: 2px;
+        }
+
+        p {
+            margin-bottom: 16px;
+            color: #a1a1aa;
+        }
+
+        ul {
+            list-style: none;
+            margin-bottom: 16px;
+        }
+
+        li {
+            position: relative;
+            padding-left: 24px;
+            margin-bottom: 10px;
+            color: #a1a1aa;
+        }
+
+        li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        .footer-note {
+            text-align: center;
+            margin-top: 40px;
+            color: #71717a;
+            font-size: 0.85rem;
+        }
+
+        a {
+            color: var(--accent-color);
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+
+        a:hover {
+            opacity: 0.8;
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 40px 16px;
+            }
+            .content-card {
+                padding: 24px;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <div class="container">
+        <header>
+            <div class="logo">NearBudy</div>
+            <h1>Privacy Policy</h1>
+            <p class="last-updated">Last Updated: May 15, 2026</p>
+        </header>
+
+        <main class="content-card">
+            <section>
+                <h2>Introduction</h2>
+                <p>Welcome to NearBudy. We are committed to protecting your personal information and your right to privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you use our mobile application and services.</p>
+            </section>
+
+            <section>
+                <h2>Information We Collect</h2>
+                <p>We collect information that you provide directly to us when you create an account or use our features:</p>
+                <ul>
+                    <li><strong>Account Data:</strong> Information from your Google account (Name, Email, Profile Picture) used for authentication.</li>
+                    <li><strong>Location Data:</strong> Real-time geographical location to facilitate nearby discovery features.</li>
+                    <li><strong>Usage Data:</strong> Information about how you interact with the app, including messages sent and users viewed.</li>
+                    <li><strong>Media:</strong> Profile photos uploaded via our integrated image hosting services.</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>How We Use Your Information</h2>
+                <p>Your data is used to provide and improve the NearBudy experience:</p>
+                <ul>
+                    <li>To show your profile to other users within your immediate vicinity.</li>
+                    <li>To facilitate real-time messaging between connected users.</li>
+                    <li>To personalize your "Suggested for You" feed using our discovery algorithms.</li>
+                    <li>To maintain account security and prevent fraudulent activity.</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>Data Sharing and Disclosure</h2>
+                <p>We do not sell your personal data to third parties. We only share information in the following circumstances:</p>
+                <ul>
+                    <li><strong>With Other Users:</strong> Your public profile (Name, Photo, Distance) is visible to nearby users.</li>
+                    <li><strong>Service Providers:</strong> We use third-party services like Firebase (Database) and Cloudinary (Images) to host our infrastructure.</li>
+                    <li><strong>Legal Requirements:</strong> If required by law to comply with legal processes or protect our rights.</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>Your Privacy Controls</h2>
+                <p>You have full control over your data within NearBudy:</p>
+                <ul>
+                    <li><strong>Location Settings:</strong> You can disable location access at any time through your device settings.</li>
+                    <li><strong>Profile Management:</strong> You can edit or hide your profile information through the in-app settings.</li>
+                    <li><strong>Data Deletion:</strong> You may request the permanent deletion of your account and all associated data through the settings menu.</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>Security</h2>
+                <p>We implement industry-standard security measures to protect your data. All communication is encrypted, and sensitive data is stored using secure cloud infrastructure. However, no method of transmission over the internet is 100% secure.</p>
+            </section>
+
+            <section>
+                <h2>Contact Us</h2>
+                <p>If you have any questions or concerns about this Privacy Policy, please contact us at:</p>
+                <p>Email: <a href="mailto:support@nearbudy.com">support@nearbudy.com</a></p>
+            </section>
+        </main>
+
+        <p class="footer-note">© 2026 NearBudy. All rights reserved.</p>
+    </div>
+</body>
+</html>

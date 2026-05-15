@@ -1,70 +1,33 @@
 {
   "project_info": {
-    "project_number": "428992181441",
-    "project_id": "amdd-76ff2",
-    "storage_bucket": "amdd-76ff2.firebasestorage.app"
+    "project_number": "315806772515",
+    "project_id": "nearbudy-da6b7",
+    "storage_bucket": "nearbudy-da6b7.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:428992181441:android:2ce439ae3228bc9fedd040",
+        "mobilesdk_app_id": "1:315806772515:android:d44ccb3bcb274df2463096",
         "android_client_info": {
-          "package_name": "com.camchat.app"
+          "package_name": "com.nearbudy.app"
         }
       },
       "oauth_client": [
         {
-          "client_id": "428992181441-h7tdco5s8d1i4316ics4httgqo4idh6e.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.camchat.app",
-            "certificate_hash": "e068638d232cfbc220868fc88638b52ac9cecaa9"
-          }
-        },
-        {
-          "client_id": "428992181441-cdgreqoutebe328evb4vpnmi9r22hl6n.apps.googleusercontent.com",
+          "client_id": "315806772515-4dhnlk7tqnqej1lcgig7ll9oa6lamuua.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyAEWLh43PasUaSuiJRgUUadqvJqw10QwTc"
+          "current_key": "AIzaSyB_9JQRKUSrWBXPzUKZpBv4CVQy5Q7g9mc"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "428992181441-cdgreqoutebe328evb4vpnmi9r22hl6n.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:428992181441:android:b24fa1d3f96e5193edd040",
-        "android_client_info": {
-          "package_name": "near.budy"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "428992181441-cdgreqoutebe328evb4vpnmi9r22hl6n.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyAEWLh43PasUaSuiJRgUUadqvJqw10QwTc"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "428992181441-cdgreqoutebe328evb4vpnmi9r22hl6n.apps.googleusercontent.com",
+              "client_id": "315806772515-4dhnlk7tqnqej1lcgig7ll9oa6lamuua.apps.googleusercontent.com",
               "client_type": 3
             }
           ]
