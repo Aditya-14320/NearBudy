@@ -7,10 +7,5 @@
     "androidScheme": "https"
   },
   "plugins": {
-    "GoogleAuth": {
-      "scopes": ["profile", "email"],
-      "serverClientId": "315806772515-4dhnlk7tqnqej1lcgig7ll9oa6lamuua.apps.googleusercontent.com",
-      "forceCodeForRefreshToken": true
-    }
   }
 }

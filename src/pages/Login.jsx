@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserCircle, Globe } from 'lucide-react';
 import { auth, db } from '../firebase';
@@ -6,21 +6,39 @@ import {
   GoogleAuthProvider, 
   setPersistence, 
   browserLocalPersistence,
-  signInWithCredential
+  signInWithCredential,
+  signInWithPopup
 } from 'firebase/auth';
-import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
+import { SocialLogin } from '@capgo/capacitor-social-login';
+import { Capacitor } from '@capacitor/core';
 import { doc, getDoc } from 'firebase/firestore';
 import { useAppContext } from '../context/AppContext';
 import './Login.css';
 
-// Initialize Capacitor Google Auth
-GoogleAuth.initialize();
+
 
 const Login = () => {
   const { currentUser, loadingAuth, signInAsGuest, nukeDatabase } = useAppContext();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Initialize Social Login for Web/Native
+    const initSocial = async () => {
+      try {
+        await SocialLogin.initialize({
+          google: {
+            webClientId: '315806772515-4dhnlk7tqnqej1lcgig7ll9oa6lamuua.apps.googleusercontent.com',
+            forceCodeForRefreshToken: true,
+          },
+        });
+      } catch (e) {
+        console.warn("SocialLogin already initialized or failed:", e);
+      }
+    };
+    initSocial();
+  }, []);
 
   if (!loadingAuth && currentUser) {
     if (currentUser.username) {
@@ -38,15 +56,32 @@ const Login = () => {
     try {
       await setPersistence(auth, browserLocalPersistence);
       
-      // Native Capacitor Google Login
-      const googleUser = await GoogleAuth.signIn();
+      // Universal Login Strategy
+      let idToken;
+
+      if (Capacitor.isNativePlatform()) {
+        // Native Capacitor Google Login
+        const googleUser = await SocialLogin.login({ 
+          provider: 'google',
+          options: {
+            scopes: ['profile', 'email'],
+          }
+        });
+        idToken = googleUser.result?.idToken || googleUser.authentication?.idToken;
+      } else {
+        // Web Firebase Popup Login (Better for localhost/web)
+        const provider = new GoogleAuthProvider();
+        const result = await signInWithPopup(auth, provider);
+        const credential = GoogleAuthProvider.credentialFromResult(result);
+        idToken = credential?.idToken;
+      }
       
-      if (!googleUser || !googleUser.authentication.idToken) {
+      if (!idToken) {
         throw new Error('Google Sign-In failed or was cancelled.');
       }
 
-      // Bridge with Firebase
-      const credential = GoogleAuthProvider.credential(googleUser.authentication.idToken);
+      // Bridge with Firebase (using the extracted token)
+      const credential = GoogleAuthProvider.credential(idToken);
       const result = await signInWithCredential(auth, credential);
       const user = result.user;
       
@@ -77,12 +112,11 @@ const Login = () => {
       </div>
 
       <div className="login-actions animate-slide-up" style={{ animationDelay: '0.1s' }}>
-        <div className="login-actions">
-          <button 
-            onClick={handleGoogleSignIn} 
-            className="btn-google" 
-            disabled={loading}
-          >
+        <button 
+          onClick={handleGoogleSignIn} 
+          className="btn-google" 
+          disabled={loading}
+        >
             <div className="google-icon-wrapper">
               <svg viewBox="0 0 48 48">
                 <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
@@ -100,7 +134,6 @@ const Login = () => {
         </p>
         
         {error && <span className="error-text animate-shake">{error}</span>}
-      </div>
 
       <div className="login-footer animate-fade-in" style={{ animationDelay: '0.3s' }}>
         <p>By continuing, you agree to our</p>
