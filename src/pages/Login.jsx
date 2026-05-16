@@ -3,14 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { UserCircle, Globe } from 'lucide-react';
 import { auth, db } from '../firebase';
 import { 
-  signInWithPopup, 
   GoogleAuthProvider, 
   setPersistence, 
-  browserLocalPersistence
+  browserLocalPersistence,
+  signInWithCredential
 } from 'firebase/auth';
+import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { useAppContext } from '../context/AppContext';
 import './Login.css';
+
+// Initialize Capacitor Google Auth
+GoogleAuth.initialize();
 
 const Login = () => {
   const { currentUser, loadingAuth, signInAsGuest, nukeDatabase } = useAppContext();
@@ -33,9 +37,17 @@ const Login = () => {
     
     try {
       await setPersistence(auth, browserLocalPersistence);
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: 'select_account' });
-      const result = await signInWithPopup(auth, provider);
+      
+      // Native Capacitor Google Login
+      const googleUser = await GoogleAuth.signIn();
+      
+      if (!googleUser || !googleUser.authentication.idToken) {
+        throw new Error('Google Sign-In failed or was cancelled.');
+      }
+
+      // Bridge with Firebase
+      const credential = GoogleAuthProvider.credential(googleUser.authentication.idToken);
+      const result = await signInWithCredential(auth, credential);
       const user = result.user;
       
       const userDocRef = doc(db, 'users', user.uid);
