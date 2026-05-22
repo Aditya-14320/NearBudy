@@ -7,5 +7,10 @@
     "androidScheme": "https"
   },
   "plugins": {
+    "SocialLogin": {
+      "providers": {
+        "google": true
+      }
+    }
   }
 }

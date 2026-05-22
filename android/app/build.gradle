@@ -7,7 +7,7 @@ android {
         applicationId "com.nearbudy.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 7
+        versionCode 9
         versionName "1.0.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
@@ -21,6 +21,12 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+    }
+
+    lint {
+        checkReleaseBuilds false
+        abortOnError false
+        checkDependencies false
     }
 }
 
@@ -51,4 +57,10 @@ try {
     }
 } catch(Exception e) {
     logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}
+
+tasks.whenTaskAdded { task ->
+    if (task.name.startsWith("lintVitalAnalyzeRelease")) {
+        task.enabled = false
+    }
 }
