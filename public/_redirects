@@ -1,2 +1,2 @@
-/api/*  https://nearbudy-da6b7.vercel.app/api/:splat  200
-/*      /index.html                                   200
+/api/*  /.netlify/functions/api?path=:splat  200
+/*      /index.html                           200
