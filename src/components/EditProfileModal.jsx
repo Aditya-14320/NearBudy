@@ -234,7 +234,7 @@ const EditProfileModal = ({ isOpen, onClose }) => {
           <div className="edit-content">
             {currentUser?.isGuest && (
               <div className="guest-edit-warning">
-                ⚠️ You are in Guest Mode. Connect your Google account in settings to save your profile permanently.
+                ⚠️ You are in Guest Mode. Please sign up for an account to save your profile permanently.
               </div>
             )}
             <form className="edit-form" onSubmit={handleSave}>

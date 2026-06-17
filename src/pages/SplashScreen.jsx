@@ -5,12 +5,14 @@ import './SplashScreen.css';
 
 const SplashScreen = () => {
   const navigate = useNavigate();
-  const { currentUser, loadingAuth, signInAsGuest } = useAppContext();
+  const { currentUser, loadingAuth, isEmailUnverified } = useAppContext();
 
   useEffect(() => {
     if (!loadingAuth) {
       if (currentUser) {
-        if (currentUser.username) {
+        if (isEmailUnverified) {
+          navigate('/verify-email');
+        } else if (currentUser.username) {
           navigate('/home');
         } else {
           navigate('/profile-setup');
@@ -19,7 +21,7 @@ const SplashScreen = () => {
         navigate('/login');
       }
     }
-  }, [loadingAuth, currentUser, navigate]);
+  }, [loadingAuth, currentUser, isEmailUnverified, navigate]);
 
   return (
     <div className="splash-container animate-fade-in">

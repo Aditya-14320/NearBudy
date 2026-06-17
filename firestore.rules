@@ -10,6 +10,14 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    // OTPs and Rate Limits - Backend Only (deny all client requests)
+    match /otps/{otpId} {
+      allow read, write: if false;
+    }
+    match /rate_limits/{limitId} {
+      allow read, write: if false;
+    }
+
     // Users Collection
     match /users/{userId} {
       allow read: if isSignedIn();

@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:428992181441:android:b24fa1d3f96e5193edd040",
+        "mobilesdk_app_id": "1:428992181441:android:9bbd7b684e1459bcedd040",
         "android_client_info": {
-          "package_name": "near.budy"
+          "package_name": "com.nearbudy.app"
         }
       },
       "oauth_client": [

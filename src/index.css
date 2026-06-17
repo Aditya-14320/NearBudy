@@ -183,3 +183,42 @@ input, textarea, select {
   border: 1px solid var(--border-color);
   border-radius: 16px;
 }
+
+/* Country Selector Global Styles */
+.country-select {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  padding-left: 14px;
+  padding-right: 22px;
+  outline: none;
+  cursor: pointer;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  height: 48px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  background-size: 10px;
+  transition: border-color 0.2s;
+}
+
+.country-select:focus {
+  border-right-color: var(--accent-primary);
+}
+
+.country-select option {
+  background-color: #16161a;
+  color: white;
+  padding: 8px;
+}
+
+/* Override input padding when select exists inside input fields */
+.modern-input-field.has-select input,
+.input-field-forgot.has-select input {
+  padding-left: 12px !important;
+}

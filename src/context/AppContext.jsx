@@ -1,7 +1,7 @@
 import { createContext, useState, useContext, useEffect, useRef } from 'react';
 import { auth, db, setPersistence, browserLocalPersistence } from '../firebase';
 import { doc, getDoc, collection, onSnapshot, addDoc, updateDoc, deleteDoc, setDoc, query, where, serverTimestamp, writeBatch, getDocs } from 'firebase/firestore';
-import { deleteUser, signInAnonymously, linkWithCredential, GoogleAuthProvider } from 'firebase/auth';
+import { deleteUser, signInAnonymously, linkWithCredential } from 'firebase/auth';
 import { Capacitor } from '@capacitor/core';
 // Capacitor plugins will be imported dynamically to prevent web build errors
 
@@ -18,6 +18,7 @@ const APP_OWNERS = [
 export const AppProvider = ({ children }) => {
   // Global Data
   const [currentUser, setCurrentUser] = useState(null);
+  const [firebaseUser, setFirebaseUser] = useState(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [nearbyUsers, setNearbyUsers] = useState([]);
   const [requests, setRequests] = useState([]);
@@ -34,11 +35,22 @@ export const AppProvider = ({ children }) => {
     } catch { return {}; }
   });
 
+  const isEmailUnverified = firebaseUser && !firebaseUser.isAnonymous && !firebaseUser.emailVerified;
+
+  const reloadAuthUser = async () => {
+    if (auth.currentUser) {
+      await auth.currentUser.reload();
+      setFirebaseUser(auth.currentUser ? { ...auth.currentUser } : null);
+    }
+  };
+
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      setFirebaseUser(user);
       if (user) {
         // Save login type
-        localStorage.setItem('nb_auth_type', user.isAnonymous ? 'guest' : 'google');
+        const authType = user.isAnonymous ? 'guest' : 'email';
+        localStorage.setItem('nb_auth_type', authType);
         
         // Fetch profile from Firestore
         const docRef = doc(db, "users", user.uid);
@@ -140,6 +152,11 @@ export const AppProvider = ({ children }) => {
   };
 
   useEffect(() => {
+    if (!currentUser) {
+      setNearbyUsers([]);
+      return;
+    }
+
     // Listen to all real users in the database
     const unsubscribeUsers = onSnapshot(collection(db, "users"), (snapshot) => {
       let realUsers = snapshot.docs.map(doc => {
@@ -152,15 +169,15 @@ export const AppProvider = ({ children }) => {
           id: doc.id,
           lat: userLat,
           lng: userLng,
-          rawDistance: currentUser ? getRawDistance(currentUser.lat, currentUser.lng, userLat, userLng) : 999999,
-          distance: currentUser ? getDistanceFormatted(currentUser.lat, currentUser.lng, userLat, userLng) : "Nearby",
+          rawDistance: getRawDistance(currentUser.lat, currentUser.lng, userLat, userLng),
+          distance: getDistanceFormatted(currentUser.lat, currentUser.lng, userLat, userLng),
           isLocked: false
         };
       });
 
       // Filter out current user and sort by distance
       realUsers = realUsers
-        .filter(u => u.id !== currentUser?.id)
+        .filter(u => u.id !== currentUser.id)
         .sort((a, b) => a.rawDistance - b.rawDistance);
 
       setNearbyUsers(realUsers);
@@ -354,7 +371,7 @@ export const AppProvider = ({ children }) => {
     if (!currentUser) return;
     
     if (currentUser.isGuest) {
-      alert("Guests cannot send requests. Please upgrade to a Google account to chat!");
+      alert("Guests cannot send requests. Please sign up for an account to chat!");
       return;
     }
 
@@ -484,7 +501,7 @@ export const AppProvider = ({ children }) => {
     if (!currentUser) return null;
 
     if (currentUser.isGuest) {
-      alert("Guests cannot use Quick Chat. Please upgrade to a Google account!");
+      alert("Guests cannot use Quick Chat. Please sign up for an account!");
       return null;
     }
     
@@ -651,6 +668,9 @@ export const AppProvider = ({ children }) => {
   return (
     <AppContext.Provider value={{
       currentUser, setCurrentUser,
+      firebaseUser,
+      isEmailUnverified,
+      reloadAuthUser,
       loadingAuth,
       nearbyUsers: visibleUsers, setNearbyUsers,
       requests,

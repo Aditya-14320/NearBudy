@@ -13,6 +13,10 @@ import PrivacyPolicy from './pages/Policy';
 import Terms from './pages/Terms';
 import DeleteAccount from './pages/DeleteAccount';
 import Layout from './components/Layout';
+import ProtectedRoute from './components/ProtectedRoute';
+import VerifyEmail from './pages/VerifyEmail';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 function App() {
   return (
@@ -20,14 +24,25 @@ function App() {
       <Routes>
         <Route path="/" element={<SplashScreen />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/profile-setup" element={<ProfileSetup />} />
-        <Route path="/chat/:id" element={<ChatScreen />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<Terms />} />
-        <Route path="/delete-account" element={<DeleteAccount />} />
+        
+        {/* Verification & Password Recovery (available without full auth verification) */}
+        <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+
+        {/* Protected Profile Setup (requires auth check) */}
+        <Route path="/profile-setup" element={<ProtectedRoute><ProfileSetup /></ProtectedRoute>} />
+        
+        {/* Protected Chat Screen (requires auth check but no global bottom navigation) */}
+        <Route path="/chat/:id" element={<ProtectedRoute><ChatScreen /></ProtectedRoute>} />
+        
+        {/* Protected Delete Account */}
+        <Route path="/delete-account" element={<ProtectedRoute><DeleteAccount /></ProtectedRoute>} />
         
         {/* Protected/Main App Routes wrapped in Layout */}
-        <Route element={<Layout />}>
+        <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
           <Route path="/home" element={<Home />} />
           <Route path="/map" element={<MapPage />} />
           <Route path="/chats" element={<ChatsPage />} />
@@ -43,3 +58,4 @@ function App() {
 }
 
 export default App;
+

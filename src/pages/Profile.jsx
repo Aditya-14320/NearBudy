@@ -2,8 +2,7 @@ import { useState, useMemo } from 'react';
 import { Settings, Edit2, Crown, Globe, Share2, Users } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
-import { auth } from '../firebase';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+
 import EditProfileModal from '../components/EditProfileModal';
 import SettingsModal from '../components/SettingsModal';
 import PremiumModal from '../components/PremiumModal';
@@ -17,29 +16,7 @@ const Profile = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
-  const [upgrading, setUpgrading] = useState(false);
 
-  const handleUpgrade = async () => {
-    setUpgrading(true);
-    try {
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      const credential = GoogleAuthProvider.credentialFromResult(result);
-      if (credential) {
-        const success = await upgradeAccount(credential);
-        if (success) {
-          alert("Account upgraded successfully!");
-        } else {
-          alert("Failed to link account. This Google account might already be in use.");
-        }
-      }
-    } catch (err) {
-      console.error("Upgrade error:", err);
-      alert("Upgrade failed.");
-    } finally {
-      setUpgrading(false);
-    }
-  };
 
   const handleShare = async () => {
     const inviteText = `Hey! Join me on NearBudy, a cool app to discover and chat with people nearby. Use my code: ${currentUser.referralCode || 'NEARBUDY'}\n\nDownload here: https://nearbudy.vercel.app`;
