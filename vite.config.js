@@ -124,11 +124,6 @@ export default defineConfig(({ mode }) => {
   optimizeDeps: {
     include: ['@capgo/capacitor-social-login']
   },
-  server: {
-    headers: {
-      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
-    }
-  },
   build: {
     sourcemap: false,
     rollupOptions: {

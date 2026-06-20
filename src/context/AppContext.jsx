@@ -35,8 +35,6 @@ export const AppProvider = ({ children }) => {
     } catch { return {}; }
   });
 
-  const isEmailUnverified = firebaseUser && !firebaseUser.isAnonymous && !firebaseUser.emailVerified;
-
   const reloadAuthUser = async () => {
     if (auth.currentUser) {
       await auth.currentUser.reload();
@@ -49,7 +47,7 @@ export const AppProvider = ({ children }) => {
       setFirebaseUser(user);
       if (user) {
         // Save login type
-        const authType = user.isAnonymous ? 'guest' : 'email';
+        const authType = user.isAnonymous ? 'guest' : 'google';
         localStorage.setItem('nb_auth_type', authType);
         
         // Fetch profile from Firestore
@@ -669,7 +667,6 @@ export const AppProvider = ({ children }) => {
     <AppContext.Provider value={{
       currentUser, setCurrentUser,
       firebaseUser,
-      isEmailUnverified,
       reloadAuthUser,
       loadingAuth,
       nearbyUsers: visibleUsers, setNearbyUsers,

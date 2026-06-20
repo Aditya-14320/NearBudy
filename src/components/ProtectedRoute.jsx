@@ -2,7 +2,7 @@ import { Navigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 
 const ProtectedRoute = ({ children }) => {
-  const { currentUser, loadingAuth, isEmailUnverified } = useAppContext();
+  const { currentUser, loadingAuth } = useAppContext();
 
   if (loadingAuth) {
     // Show a clean loading state matching splash screen or returning null
@@ -17,10 +17,6 @@ const ProtectedRoute = ({ children }) => {
 
   if (!currentUser) {
     return <Navigate to="/login" replace />;
-  }
-
-  if (isEmailUnverified) {
-    return <Navigate to="/verify-email" replace />;
   }
 
   return children;

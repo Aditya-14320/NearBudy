@@ -669,3 +669,52 @@
 .auth-mode-toggle span:hover {
   color: var(--accent-secondary);
 }
+
+/* Google Sign-in Button Styles */
+.btn-google {
+  width: 100%;
+  padding: 16px;
+  border-radius: 16px;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  cursor: pointer;
+  background: #ffffff;
+  color: #1f2937;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.btn-google:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 255, 255, 0.1);
+  background: #f9fafb;
+}
+
+.btn-google:active {
+  transform: scale(0.97);
+}
+
+.btn-google:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Spinner for Google login state */
+.loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(31, 41, 55, 0.2);
+  border-top-color: #1f2937;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

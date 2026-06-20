@@ -25,19 +25,45 @@ if (serviceAccountKey) {
 }
 
 let app;
-if (getApps().length === 0) {
-  if (serviceAccount) {
-    app = initializeApp({
-      credential: cert(serviceAccount)
-    });
+let adminAuth;
+let adminDb;
+
+try {
+  if (getApps().length === 0) {
+    if (serviceAccount) {
+      app = initializeApp({
+        credential: cert(serviceAccount)
+      });
+    } else {
+      // Calling initializeApp() without credentials will fail outside Google Cloud,
+      // so we explicitly throw a helpful message if serviceAccount is missing.
+      throw new Error("FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not defined.");
+    }
   } else {
-    app = initializeApp();
+    app = getApps()[0];
   }
-} else {
-  app = getApps()[0];
+  adminAuth = getAuth(app);
+  adminDb = getFirestore(app);
+} catch (error) {
+  console.error("Firebase Admin SDK initialization failed:", error.message);
+  
+  const createFailureProxy = (serviceName) => {
+    return new Proxy({}, {
+      get(target, prop) {
+        if (prop === 'then') return undefined; // Avoid blocking promise resolutions
+        throw new Error(
+          `Firebase ${serviceName} failed to initialize. Please check that FIREBASE_SERVICE_ACCOUNT_KEY is configured in your Netlify Environment Variables. (Original error: ${error.message})`
+        );
+      }
+    });
+  };
+
+  adminAuth = createFailureProxy("Auth");
+  adminDb = createFailureProxy("Firestore");
+  app = null;
 }
 
-export const adminAuth = getAuth(app);
-export const adminDb = getFirestore(app);
+export { adminAuth, adminDb };
 export default app;
+
 

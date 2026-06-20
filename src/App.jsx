@@ -14,9 +14,6 @@ import Terms from './pages/Terms';
 import DeleteAccount from './pages/DeleteAccount';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
-import VerifyEmail from './pages/VerifyEmail';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
 
 function App() {
   return (
@@ -26,11 +23,6 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<Terms />} />
-        
-        {/* Verification & Password Recovery (available without full auth verification) */}
-        <Route path="/verify-email" element={<VerifyEmail />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Protected Profile Setup (requires auth check) */}
         <Route path="/profile-setup" element={<ProtectedRoute><ProfileSetup /></ProtectedRoute>} />
