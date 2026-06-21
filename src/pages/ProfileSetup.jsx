@@ -1,12 +1,24 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Camera, Check, ChevronRight, ChevronLeft, User, AtSign, Briefcase, Heart, Sparkles, AlertCircle } from 'lucide-react';
+import { Camera, Check, ChevronRight, ChevronLeft, User, AtSign, Briefcase, Heart, Sparkles, AlertCircle, MapPin } from 'lucide-react';
 import { auth, db } from '../firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { useAppContext } from '../context/AppContext';
 import { AVATAR_PRESETS, getDefaultAvatar } from '../utils/avatars';
-import { uploadToCloudinary, getThumbnailUrl } from '../utils/cloudinary';
+import { uploadToCloudinary } from '../utils/cloudinary';
 import './ProfileSetup.css';
+
+const calculateAge = (dobString) => {
+  if (!dobString) return 0;
+  const today = new Date();
+  const birthDate = new Date(dobString);
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+};
 
 const ProfileSetup = () => {
   const navigate = useNavigate();
@@ -17,15 +29,20 @@ const ProfileSetup = () => {
   const [loading, setLoading] = useState(false);
   const [usernameStatus, setUsernameStatus] = useState('idle'); // idle, checking, taken, available
   const [suggestions, setSuggestions] = useState([]);
+  const [gpsLoading, setGpsLoading] = useState(false);
+  const [gpsStatus, setGpsStatus] = useState('idle'); // idle, loading, success, error
   
   const [formData, setFormData] = useState({
     name: '',
     username: '',
     profession: '',
-    age: '',
+    dob: '',
     gender: '',
     bio: '',
     interests: [],
+    city: '',
+    lat: null,
+    lng: null,
     agreeToTerms: true
   });
   const [photo, setPhoto] = useState(null);
@@ -122,12 +139,60 @@ const ProfileSetup = () => {
     });
   };
 
+  const handleGpsFetch = async () => {
+    setGpsLoading(true);
+    setGpsStatus('loading');
+    try {
+      if (!navigator.geolocation) {
+        setGpsStatus('error');
+        setGpsLoading(false);
+        alert("Geolocation is not supported by your browser.");
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setFormData(prev => ({
+            ...prev,
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          }));
+          setGpsStatus('success');
+          setGpsLoading(false);
+        },
+        (error) => {
+          console.error("GPS fetch error:", error);
+          setGpsStatus('error');
+          setGpsLoading(false);
+          alert("Failed to get your location. Please check your GPS permission.");
+        },
+        { timeout: 8000, enableHighAccuracy: true }
+      );
+    } catch (err) {
+      console.error(err);
+      setGpsStatus('error');
+      setGpsLoading(false);
+    }
+  };
+
   const handleFinish = async () => {
     setLoading(true);
     try {
       const user = auth.currentUser;
       if (user) {
-        const coords = await getLocation();
+        let coords = { lat: formData.lat || 28.6304, lng: formData.lng || 77.2177 };
+        
+        // If GPS coordinate is not explicitly set, try to get it
+        if (!formData.lat || !formData.lng) {
+          try {
+            const gps = await getLocation();
+            if (gps) {
+              coords = gps;
+            }
+          } catch (e) {
+            console.log("Could not auto-fetch location on finish", e);
+          }
+        }
+
         let finalAvatar = photo || getDefaultAvatar(formData.gender);
         
         const isPreset = Object.values(AVATAR_PRESETS).flat().includes(photo);
@@ -143,17 +208,20 @@ const ProfileSetup = () => {
           id: user.uid,
           name: formData.name,
           username: formData.username.toLowerCase(),
-          profession: formData.profession,
-          age: parseInt(formData.age, 10),
-          gender: formData.gender,
-          bio: formData.bio,
+          profession: formData.profession || '',
+          age: calculateAge(formData.dob),
+          dob: formData.dob || '',
+          gender: formData.gender || '',
+          bio: formData.bio || '',
           interests: formData.interests.join(', '),
+          city: formData.city,
           avatar: finalAvatar,
           isPremium: false,
           isGuest: user.isAnonymous,
           referralCode: referralCode,
           lat: coords.lat,
           lng: coords.lng,
+          onboardingCompleted: true,
           createdAt: new Date().toISOString()
         };
         
@@ -170,9 +238,8 @@ const ProfileSetup = () => {
   };
 
   const nextStep = () => {
-    if (step === 0 && (!formData.name || usernameStatus !== 'available')) return;
-    if (step === 1 && (!formData.age || !formData.gender)) return;
-    if (step === 2 && !formData.profession) return;
+    if (step === 0 && (!formData.name.trim() || usernameStatus !== 'available')) return;
+    if (step === 2 && !formData.city.trim()) return;
     setStep(s => s + 1);
   };
 
@@ -180,9 +247,9 @@ const ProfileSetup = () => {
 
   const steps = [
     { title: "Who are you?", icon: <User size={24} /> },
-    { title: "The Basics", icon: <AtSign size={24} /> },
-    { title: "What do you do?", icon: <Briefcase size={24} /> },
-    { title: "Personalize", icon: <Heart size={24} /> },
+    { title: "The Basics", icon: <Sparkles size={24} /> },
+    { title: "Location", icon: <MapPin size={24} /> },
+    { title: "Profession & Bio", icon: <Briefcase size={24} /> },
     { title: "Profile Picture", icon: <Camera size={24} /> }
   ];
 
@@ -211,7 +278,7 @@ const ProfileSetup = () => {
                   name="name" 
                   value={formData.name} 
                   onChange={handleChange} 
-                  placeholder="Your real name"
+                  placeholder="Your real name or nickname"
                   className="premium-input"
                 />
               </div>
@@ -247,19 +314,17 @@ const ProfileSetup = () => {
           {step === 1 && (
             <div className="animate-fade-in">
               <div className="input-group-premium">
-                <label>Age</label>
+                <label>Date of Birth (Optional)</label>
                 <input 
-                  type="number" 
-                  name="age" 
-                  value={formData.age} 
+                  type="date" 
+                  name="dob" 
+                  value={formData.dob} 
                   onChange={handleChange} 
-                  placeholder="18+"
                   className="premium-input"
-                  min="18"
                 />
               </div>
               <div className="input-group-premium">
-                <label>Gender</label>
+                <label>Gender (Optional)</label>
                 <div className="gender-grid">
                   {['Male', 'Female', 'Other'].map(g => (
                     <div 
@@ -278,22 +343,43 @@ const ProfileSetup = () => {
           {step === 2 && (
             <div className="animate-fade-in">
               <div className="input-group-premium">
-                <label>Profession or College</label>
+                <label>City / Town (Required)</label>
                 <input 
                   type="text" 
-                  name="profession" 
-                  value={formData.profession} 
+                  name="city" 
+                  value={formData.city} 
                   onChange={handleChange} 
-                  placeholder="e.g. Computer Science Student"
+                  placeholder="e.g. New Delhi, San Francisco"
                   className="premium-input"
                 />
               </div>
-              <p className="hint-text">Let people know what you're passionate about.</p>
+              <div className="gps-section">
+                <button 
+                  type="button" 
+                  className={`btn-gps ${gpsStatus === 'success' ? 'success' : ''}`} 
+                  onClick={handleGpsFetch}
+                  disabled={gpsLoading}
+                >
+                  <MapPin size={18} /> {gpsLoading ? 'Fetching GPS...' : gpsStatus === 'success' ? 'GPS Location Enabled' : 'Enable GPS Location'}
+                </button>
+                <p className="gps-hint">Precise GPS coordinates are used to find nearby buddies.</p>
+              </div>
             </div>
           )}
 
           {step === 3 && (
             <div className="animate-fade-in">
+              <div className="input-group-premium">
+                <label>Profession or College (Optional)</label>
+                <input 
+                  type="text" 
+                  name="profession" 
+                  value={formData.profession} 
+                  onChange={handleChange} 
+                  placeholder="e.g. Software Engineer, College Student"
+                  className="premium-input"
+                />
+              </div>
               <div className="input-group-premium">
                 <label>Bio (Optional)</label>
                 <textarea 
@@ -306,7 +392,7 @@ const ProfileSetup = () => {
                 />
               </div>
               <div className="input-group-premium">
-                <label>Interests</label>
+                <label>Interests (Optional)</label>
                 <div className="interest-chips">
                   {formData.interests.map((it, idx) => (
                     <span key={idx} className="interest-chip">
@@ -359,7 +445,7 @@ const ProfileSetup = () => {
             </button>
           )}
           
-          {(step === 3 || step === 4) && (
+          {(step === 1 || step === 3 || step === 4) && (
              <button className="btn-skip" onClick={step === 4 ? handleFinish : nextStep}>
                Skip
              </button>
@@ -370,9 +456,8 @@ const ProfileSetup = () => {
               className="btn-next" 
               onClick={nextStep} 
               disabled={
-                (step === 0 && (!formData.name || usernameStatus !== 'available')) ||
-                (step === 1 && (!formData.age || !formData.gender)) ||
-                (step === 2 && !formData.profession)
+                (step === 0 && (!formData.name.trim() || usernameStatus !== 'available')) ||
+                (step === 2 && !formData.city.trim())
               }
             >
               Continue <ChevronRight size={20} />

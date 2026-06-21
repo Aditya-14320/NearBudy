@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Compass, MessageSquare } from 'lucide-react';
+import { Compass, MessageSquare, Mail, Lock, Eye, EyeOff, ArrowLeft, User } from 'lucide-react';
 import { auth } from '../firebase';
 import { GoogleAuthProvider, signInWithCredential, signInWithPopup } from 'firebase/auth';
 import { useAppContext } from '../context/AppContext';
@@ -18,6 +18,12 @@ const GoogleIcon = () => (
 
 const Login = () => {
   const { currentUser, loadingAuth } = useAppContext();
+  const [view, setView] = useState('options'); // 'options' or 'email'
+  const [emailMode, setEmailMode] = useState('login'); // 'login' or 'register'
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -25,7 +31,7 @@ const Login = () => {
   // Redirect logged-in users to appropriate pages
   useEffect(() => {
     if (!loadingAuth && currentUser) {
-      if (currentUser.username) {
+      if (currentUser.onboardingCompleted) {
         navigate('/home');
       } else {
         navigate('/profile-setup');
@@ -45,10 +51,11 @@ const Login = () => {
       if (Capacitor.isNativePlatform()) {
         // Native Social Login using @capgo/capacitor-social-login
         const { SocialLogin } = await import('@capgo/capacitor-social-login');
+        const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '428992181441-cdgreqoutebe328evb4vpnmi9r22hl6n.apps.googleusercontent.com';
         
         await SocialLogin.initialize({
           google: {
-            webClientId: '428992181441-cdgreqoutebe328evb4vpnmi9r22hl6n.apps.googleusercontent.com',
+            webClientId: googleClientId,
           }
         });
 
@@ -85,6 +92,170 @@ const Login = () => {
       setLoading(false);
     }
   };
+
+  const handleEmailAuth = async (e) => {
+    e.preventDefault();
+    setError('');
+    setResetSent(false);
+    setLoading(true);
+
+    try {
+      if (emailMode === 'login') {
+        const { signInWithEmailAndPassword } = await import('firebase/auth');
+        await signInWithEmailAndPassword(auth, email, password);
+      } else {
+        const { createUserWithEmailAndPassword } = await import('firebase/auth');
+        await createUserWithEmailAndPassword(auth, email, password);
+      }
+    } catch (err) {
+      console.error("Email Authentication error:", err);
+      let friendlyMessage = 'Authentication failed. Please try again.';
+      if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+        friendlyMessage = 'Invalid email or password.';
+      } else if (err.code === 'auth/email-already-in-use') {
+        friendlyMessage = 'This email is already registered. Please sign in instead.';
+      } else if (err.code === 'auth/weak-password') {
+        friendlyMessage = 'Password should be at least 6 characters.';
+      } else if (err.code === 'auth/invalid-email') {
+        friendlyMessage = 'Please enter a valid email address.';
+      } else if (err.message) {
+        friendlyMessage = err.message;
+      }
+      setError(friendlyMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setError('Please enter your email address first to reset your password.');
+      return;
+    }
+    setError('');
+    setResetSent(false);
+    setLoading(true);
+    try {
+      const { sendPasswordResetEmail } = await import('firebase/auth');
+      await sendPasswordResetEmail(auth, email);
+      setResetSent(true);
+    } catch (err) {
+      console.error("Password reset error:", err);
+      let friendlyMessage = 'Failed to send password reset email.';
+      if (err.code === 'auth/invalid-email') {
+        friendlyMessage = 'Please enter a valid email address.';
+      } else if (err.code === 'auth/user-not-found') {
+        friendlyMessage = 'No user found with this email address.';
+      } else if (err.message) {
+        friendlyMessage = err.message;
+      }
+      setError(friendlyMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAnonymousLogin = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      const { signInAnonymously } = await import('firebase/auth');
+      await signInAnonymously(auth);
+    } catch (err) {
+      console.error("Anonymous Sign-in error:", err);
+      setError(err.message || 'Failed to sign in as guest. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (view === 'email') {
+    return (
+      <div className="login-container animate-fade-in">
+        <div className="glow-orb orb-1"></div>
+        <div className="glow-orb orb-2"></div>
+        <div className="map-grid-overlay"></div>
+
+        <div className="form-container-wrapper animate-slide-up">
+          <button onClick={() => { setView('options'); setError(''); setResetSent(false); }} className="btn-back-link">
+            <ArrowLeft size={16} />
+            <span>Back</span>
+          </button>
+
+          <div className="form-header-row">
+            <h2 className="form-title">
+              {emailMode === 'login' ? 'Welcome Back' : 'Create Account'}
+            </h2>
+            <p className="form-subtitle">
+              {emailMode === 'login' 
+                ? 'Sign in to connect with nearby friends.' 
+                : 'Join NearBudy and discover students around you.'}
+            </p>
+          </div>
+
+          <form onSubmit={handleEmailAuth} className="form-body">
+            <div className="modern-input-field">
+              <Mail className="input-icon-left" size={18} />
+              <input 
+                type="email" 
+                placeholder="Email Address" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="modern-input-field">
+              <Lock className="input-icon-left" size={18} />
+              <input 
+                type={showPassword ? "text" : "password"} 
+                placeholder="Password" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button 
+                type="button" 
+                onClick={() => setShowPassword(!showPassword)} 
+                className="input-action-right"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+
+            {emailMode === 'login' && (
+              <span onClick={handleForgotPassword} className="forgot-password-link-new">
+                Forgot Password?
+              </span>
+            )}
+
+            <button type="submit" className="btn-auth-submit-new" disabled={loading}>
+              {loading ? (
+                <div className="loading-spinner" style={{ borderColor: 'rgba(255, 255, 255, 0.2)', borderTopColor: '#ffffff', margin: '0 auto' }}></div>
+              ) : (
+                <span>{emailMode === 'login' ? 'Sign In' : 'Sign Up'}</span>
+              )}
+            </button>
+          </form>
+
+          <div className="auth-mode-toggle">
+            {emailMode === 'login' ? (
+              <>
+                Don't have an account? <span onClick={() => { setEmailMode('register'); setError(''); setResetSent(false); }}>Sign Up</span>
+              </>
+            ) : (
+              <>
+                Already have an account? <span onClick={() => { setEmailMode('login'); setError(''); setResetSent(false); }}>Sign In</span>
+              </>
+            )}
+          </div>
+          
+          {resetSent && <span className="error-text" style={{ color: 'var(--success)' }}>Password reset email sent successfully!</span>}
+          {error && <span className="error-text animate-shake">{error}</span>}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="login-container animate-fade-in">
@@ -181,6 +352,24 @@ const Login = () => {
               <span>Continue with Google</span>
             </>
           )}
+        </button>
+
+        <button 
+          onClick={() => { setView('email'); setError(''); setResetSent(false); }} 
+          className="btn-email"
+          disabled={loading}
+        >
+          <Mail size={20} style={{ flexShrink: 0 }} />
+          <span>Continue with Email</span>
+        </button>
+
+        <button 
+          onClick={handleAnonymousLogin} 
+          className="btn-guest"
+          disabled={loading}
+        >
+          <User size={20} style={{ flexShrink: 0 }} />
+          <span>Browse as Guest</span>
         </button>
       </div>
 

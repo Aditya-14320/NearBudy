@@ -2,7 +2,7 @@ import { Capacitor } from '@capacitor/core';
 
 // Base URL: absolute URL for Native Android/iOS, relative for Web (proxied during local development)
 const API_BASE_URL = Capacitor.isNativePlatform()
-  ? (import.meta.env.VITE_API_URL || 'https://nearbudy-da6b7.vercel.app/api')
+  ? (import.meta.env.VITE_API_URL || 'https://nearbudy-8e4cb.vercel.app/api')
   : '/api';
 
 /**

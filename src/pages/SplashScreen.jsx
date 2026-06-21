@@ -10,7 +10,7 @@ const SplashScreen = () => {
   useEffect(() => {
     if (!loadingAuth) {
       if (currentUser) {
-        if (currentUser.username) {
+        if (currentUser.onboardingCompleted) {
           navigate('/home');
         } else {
           navigate('/profile-setup');

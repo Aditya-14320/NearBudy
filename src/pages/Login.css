@@ -718,3 +718,63 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+.btn-email {
+  width: 100%;
+  padding: 16px;
+  border-radius: 16px;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  cursor: pointer;
+  background: var(--bg-secondary);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  margin-top: 12px;
+}
+
+.btn-email:hover {
+  transform: translateY(-2px);
+  background: var(--bg-tertiary);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.1);
+}
+
+.btn-email:active {
+  transform: scale(0.97);
+}
+
+.btn-guest {
+  width: 100%;
+  padding: 16px;
+  border-radius: 16px;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  margin-top: 12px;
+}
+
+.btn-guest:hover {
+  transform: translateY(-2px);
+  color: white;
+  border-style: solid;
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.btn-guest:active {
+  transform: scale(0.97);
+}

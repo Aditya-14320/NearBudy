@@ -14,11 +14,13 @@ const EditProfileModal = ({ isOpen, onClose }) => {
   const [formData, setFormData] = useState({
     name: '',
     profession: '',
+    dob: '',
     age: '',
     bio: '',
     interests: [],
     gender: '',
     avatar: '',
+    city: '',
     ghostMode: false
   });
   
@@ -38,16 +40,18 @@ const EditProfileModal = ({ isOpen, onClose }) => {
         if (draft) {
           setFormData(JSON.parse(draft));
         } else {
-          setFormData({
-            name: currentUser.name || '',
-            profession: currentUser.profession || '',
-            age: currentUser.age || '',
-            bio: currentUser.bio || '',
-            interests: currentUser.interests ? currentUser.interests.split(',').map(i=>i.trim()).filter(Boolean) : [],
-            gender: currentUser.gender || '',
-            avatar: currentUser.avatar || '',
-            ghostMode: currentUser.ghostMode || false
-          });
+            setFormData({
+              name: currentUser.name || '',
+              profession: currentUser.profession || '',
+              dob: currentUser.dob || '',
+              age: currentUser.age || '',
+              bio: currentUser.bio || '',
+              interests: currentUser.interests ? currentUser.interests.split(',').map(i=>i.trim()).filter(Boolean) : [],
+              gender: currentUser.gender || '',
+              avatar: currentUser.avatar || '',
+              city: currentUser.city || '',
+              ghostMode: currentUser.ghostMode || false
+            });
         }
       }, 0);
     }
@@ -135,8 +139,12 @@ const EditProfileModal = ({ isOpen, onClose }) => {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.profession || !formData.age) {
-      alert("Please fill required fields (Name, Profession, Age)");
+    if (!formData.name || !formData.name.trim()) {
+      alert("Display Name is required.");
+      return;
+    }
+    if (!formData.city || !formData.city.trim()) {
+      alert("City / Location is required.");
       return;
     }
 
@@ -156,8 +164,23 @@ const EditProfileModal = ({ isOpen, onClose }) => {
         }
       }
 
+      const calculateAge = (dobString) => {
+        if (!dobString) return 0;
+        const today = new Date();
+        const birthDate = new Date(dobString);
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+        return age;
+      };
+
+      const computedAge = calculateAge(formData.dob);
+
       const dataToSave = {
         ...formData,
+        age: computedAge,
         avatar: finalAvatar,
         interests: Array.isArray(formData.interests) ? formData.interests.join(', ') : (formData.interests || '')
       };
@@ -189,8 +212,21 @@ const EditProfileModal = ({ isOpen, onClose }) => {
     }
   };
 
+  // Helper to calculate age
+  const calculateAge = (dobString) => {
+    if (!dobString) return 0;
+    const today = new Date();
+    const birthDate = new Date(dobString);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
   // Calculate completion
-  const requiredFields = [formData.name, formData.avatar, formData.bio, formData.profession, formData.age, formData.interests.length > 0, formData.gender];
+  const requiredFields = [formData.name, formData.city, formData.avatar, formData.bio, formData.profession, formData.dob, formData.interests.length > 0, formData.gender];
   const filledFields = requiredFields.filter(Boolean).length;
   const completionPercentage = Math.round((filledFields / requiredFields.length) * 100);
 
@@ -198,6 +234,7 @@ const EditProfileModal = ({ isOpen, onClose }) => {
   const previewUser = {
     ...currentUser,
     ...formData,
+    age: calculateAge(formData.dob),
     interests: formData.interests.join(', '),
     id: currentUser.id,
     isMock: true // Prevents actual tracking/waving in preview
@@ -300,26 +337,22 @@ const EditProfileModal = ({ isOpen, onClose }) => {
                 />
               </div>
 
-              <h3 className="section-title">💼 Work & Age Info</h3>
+              <h3 className="section-title">💼 Work & Location Info</h3>
 
               <div className="form-row">
                 <div className="input-group flex-1">
-                  <label>Age *</label>
+                  <label>Date of Birth</label>
                   <input 
-                    type="number" 
-                    name="age"
+                    type="date" 
+                    name="dob"
                     className="input-field" 
-                    placeholder="e.g. 21"
-                    value={formData.age}
+                    value={formData.dob}
                     onChange={handleChange}
-                    required
-                    min="13"
-                    max="120"
                   />
                 </div>
 
                 <div className="input-group flex-1">
-                  <label>Profession *</label>
+                  <label>Profession</label>
                   <input 
                     type="text" 
                     name="profession"
@@ -327,9 +360,21 @@ const EditProfileModal = ({ isOpen, onClose }) => {
                     placeholder="e.g. Student, SDE"
                     value={formData.profession}
                     onChange={handleChange}
-                    required
                   />
                 </div>
+              </div>
+
+              <div className="input-group">
+                <label>City / Town *</label>
+                <input 
+                  type="text" 
+                  name="city"
+                  className="input-field" 
+                  placeholder="e.g. New Delhi, San Francisco"
+                  value={formData.city}
+                  onChange={handleChange}
+                  required
+                />
               </div>
 
               <h3 className="section-title">🎭 Personal</h3>

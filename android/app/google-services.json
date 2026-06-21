@@ -1,33 +1,34 @@
 {
   "project_info": {
-    "project_number": "428992181441",
-    "project_id": "amdd-76ff2",
-    "storage_bucket": "amdd-76ff2.firebasestorage.app"
+    "project_number": "514757857831",
+    "firebase_url": "https://nearbudy-8e4cb-default-rtdb.firebaseio.com",
+    "project_id": "nearbudy-8e4cb",
+    "storage_bucket": "nearbudy-8e4cb.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:428992181441:android:9bbd7b684e1459bcedd040",
+        "mobilesdk_app_id": "1:514757857831:android:60346ff8e6e07140653402",
         "android_client_info": {
           "package_name": "com.nearbudy.app"
         }
       },
       "oauth_client": [
         {
-          "client_id": "428992181441-cdgreqoutebe328evb4vpnmi9r22hl6n.apps.googleusercontent.com",
+          "client_id": "514757857831-s23dia0bgkfl6elb8s09mqotgoknd20e.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyAEWLh43PasUaSuiJRgUUadqvJqw10QwTc"
+          "current_key": "AIzaSyC1KsLfE2ywaR-f81v9oj5-3bvfyWl9tK0"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "428992181441-cdgreqoutebe328evb4vpnmi9r22hl6n.apps.googleusercontent.com",
+              "client_id": "514757857831-s23dia0bgkfl6elb8s09mqotgoknd20e.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

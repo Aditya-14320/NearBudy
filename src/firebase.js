@@ -21,6 +21,12 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const analytics = getAnalytics(app);
 export const auth = getAuth(app);
+
+// Set local persistence to keep user signed in across browser sessions
+setPersistence(auth, browserLocalPersistence).catch((err) => {
+  console.error("Firebase Auth persistence setup failed:", err);
+});
+
 export { setPersistence, browserLocalPersistence };
 export const db = initializeFirestore(app, {
   localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })

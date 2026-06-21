@@ -25,7 +25,7 @@ function App() {
         <Route path="/terms" element={<Terms />} />
 
         {/* Protected Profile Setup (requires auth check) */}
-        <Route path="/profile-setup" element={<ProtectedRoute><ProfileSetup /></ProtectedRoute>} />
+        <Route path="/profile-setup" element={<ProtectedRoute allowOnboarding><ProfileSetup /></ProtectedRoute>} />
         
         {/* Protected Chat Screen (requires auth check but no global bottom navigation) */}
         <Route path="/chat/:id" element={<ProtectedRoute><ChatScreen /></ProtectedRoute>} />

@@ -3,7 +3,7 @@
   "appName": "NearBudy",
   "webDir": "dist",
   "server": {
-    "hostname": "nearbudy-da6b7.web.app",
+    "hostname": "nearbudy-8e4cb.web.app",
     "androidScheme": "https"
   },
   "plugins": {

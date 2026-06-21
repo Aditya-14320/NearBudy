@@ -48,6 +48,7 @@ const SettingsModal = ({ isOpen, onClose }) => {
 
   const handleLogout = async () => {
     try {
+      localStorage.removeItem('nb_auth_type');
       await auth.signOut();
       navigate('/login');
     } catch (error) {

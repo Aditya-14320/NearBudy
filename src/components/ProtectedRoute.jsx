@@ -1,7 +1,7 @@
 import { Navigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute = ({ children, allowOnboarding = false }) => {
   const { currentUser, loadingAuth } = useAppContext();
 
   if (loadingAuth) {
@@ -17,6 +17,10 @@ const ProtectedRoute = ({ children }) => {
 
   if (!currentUser) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (!currentUser.onboardingCompleted && !allowOnboarding) {
+    return <Navigate to="/profile-setup" replace />;
   }
 
   return children;

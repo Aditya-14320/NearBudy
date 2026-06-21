@@ -44,10 +44,12 @@ export const AppProvider = ({ children }) => {
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      console.log("[NearBudy Auth] Auth State Changed. User UID:", user ? user.uid : "null", "isAnonymous:", user ? user.isAnonymous : "false");
       setFirebaseUser(user);
       if (user) {
         // Save login type
-        const authType = user.isAnonymous ? 'guest' : 'google';
+        const authProvider = user.providerData[0]?.providerId;
+        const authType = user.isAnonymous ? 'guest' : (authProvider === 'password' ? 'email' : 'google');
         localStorage.setItem('nb_auth_type', authType);
         
         // Fetch profile from Firestore
@@ -57,6 +59,10 @@ export const AppProvider = ({ children }) => {
         let userData = null;
         if (docSnap.exists()) {
           userData = { id: docSnap.id, ...docSnap.data() };
+          // If onboardingCompleted is not defined, default based on whether username exists (compatibility for old accounts)
+          if (userData.onboardingCompleted === undefined) {
+            userData.onboardingCompleted = !!userData.username;
+          }
         } else {
           const guestId = Math.floor(1000 + Math.random() * 9000);
           const guestName = user.displayName || `Guest_${guestId}`;
@@ -66,13 +72,14 @@ export const AppProvider = ({ children }) => {
           userData = {
             id: user.uid,
             name: guestName,
-            username: user.displayName ? user.displayName.toLowerCase().replace(/\s+/g, '') : `guest_${guestId}`,
+            username: "", // Do not pre-fill username so they must choose one during onboarding
             avatar: guestAvatar,
             isGuest: user.isAnonymous,
             isPremium: false,
             referralCode: referralCode,
             lat: 28.6304,
             lng: 77.2177,
+            onboardingCompleted: false, // New users must complete onboarding
             createdAt: serverTimestamp()
           };
           await setDoc(doc(db, "users", user.uid), userData);
