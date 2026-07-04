@@ -1,7 +1,7 @@
 import { createContext, useState, useContext, useEffect, useRef } from 'react';
 import { auth, db, setPersistence, browserLocalPersistence } from '../firebase';
 import { doc, getDoc, collection, onSnapshot, addDoc, updateDoc, deleteDoc, setDoc, query, where, serverTimestamp, writeBatch, getDocs } from 'firebase/firestore';
-import { deleteUser, signInAnonymously, linkWithCredential } from 'firebase/auth';
+import { deleteUser, signInAnonymously, linkWithCredential, GoogleAuthProvider, signInWithCredential, signInWithPopup } from 'firebase/auth';
 import { Capacitor } from '@capacitor/core';
 // Capacitor plugins will be imported dynamically to prevent web build errors
 
@@ -94,20 +94,6 @@ export const AppProvider = ({ children }) => {
         setCurrentUser(userData);
       } else {
         setCurrentUser(null);
-        if (!signingInAsGuest.current) {
-          signingInAsGuest.current = true;
-          console.log("[NearBudy Auth] Automatically signing in anonymously...");
-          signInAnonymously(auth)
-            .then(() => {
-              signingInAsGuest.current = false;
-            })
-            .catch((err) => {
-              console.error("[NearBudy Auth] Auto-sign in anonymously failed:", err);
-              signingInAsGuest.current = false;
-              setLoadingAuth(false);
-            });
-          return;
-        }
       }
       setLoadingAuth(false);
     });
@@ -654,6 +640,73 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem('skipped_users', JSON.stringify(newSkipped));
   };
 
+  const loginWithGoogle = async () => {
+    try {
+      setLoadingAuth(true);
+      const isNative = Capacitor.isNativePlatform();
+      console.log(`[NearBudy Auth] Initializing Google sign-in. Platform: ${isNative ? 'Native' : 'Web'}`);
+      
+      let idToken = null;
+      
+      if (isNative) {
+        // Native sign-in using Capgo plugin
+        const { SocialLogin } = await import('@capgo/capacitor-social-login');
+        
+        await SocialLogin.initialize({
+          google: {
+            webClientId: '514757857831-s23dia0bgkfl6elb8s09mqotgoknd20e.apps.googleusercontent.com'
+          }
+        });
+        
+        const response = await SocialLogin.login({ provider: 'google' });
+        console.log("[NearBudy Auth] Native Google sign-in response:", response);
+        
+        if (response?.result?.idToken) {
+          idToken = response.result.idToken;
+        } else {
+          throw new Error("No ID Token returned from Native Google Sign-In");
+        }
+      } else {
+        // Web sign-in
+        const { GoogleAuthProvider, signInWithPopup } = await import('firebase/auth');
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({
+          prompt: 'select_account'
+        });
+        const result = await signInWithPopup(auth, provider);
+        const credential = GoogleAuthProvider.credentialFromResult(result);
+        idToken = credential?.idToken;
+        console.log("[NearBudy Auth] Web Google sign-in token retrieved:", !!idToken);
+      }
+      
+      if (idToken) {
+        const { GoogleAuthProvider, signInWithCredential } = await import('firebase/auth');
+        const credential = GoogleAuthProvider.credential(idToken);
+        const userCredential = await signInWithCredential(auth, credential);
+        console.log("[NearBudy Auth] Firebase sign-in successful. User:", userCredential.user.uid);
+        return userCredential.user;
+      }
+    } catch (error) {
+      console.error("[NearBudy Auth] Google Sign-In failed:", error);
+      setLoadingAuth(false);
+      throw error;
+    }
+  };
+
+  const loginAsGuest = async () => {
+    try {
+      setLoadingAuth(true);
+      console.log("[NearBudy Auth] Signing in anonymously as guest...");
+      const userCredential = await signInAnonymously(auth);
+      console.log("[NearBudy Auth] Anonymous sign-in successful. User:", userCredential.user.uid);
+      return userCredential.user;
+    } catch (error) {
+      console.error("[NearBudy Auth] Anonymous Sign-In failed:", error);
+      setLoadingAuth(false);
+      throw error;
+    }
+  };
+
   return (
     <AppContext.Provider value={{
       currentUser, setCurrentUser,
@@ -679,7 +732,9 @@ export const AppProvider = ({ children }) => {
       skippedUsers,
       markAsSkipped,
       deleteAccount,
-      checkUsernameUnique
+      checkUsernameUnique,
+      loginWithGoogle,
+      loginAsGuest
     }}>
       {!loadingAuth && children}
     </AppContext.Provider>

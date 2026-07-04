@@ -16,7 +16,7 @@ const ProtectedRoute = ({ children, allowOnboarding = false }) => {
   }
 
   if (!currentUser) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/welcome" replace />;
   }
 
   if (!currentUser.onboardingCompleted && !allowOnboarding) {

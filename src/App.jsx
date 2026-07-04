@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import SplashScreen from './pages/SplashScreen';
+import Welcome from './pages/Welcome';
 import ProfileSetup from './pages/ProfileSetup';
 import Home from './pages/Home';
 import MapPage from './pages/MapPage';
@@ -18,6 +19,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<SplashScreen />} />
+        <Route path="/welcome" element={<Welcome />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<Terms />} />
 
