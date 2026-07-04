@@ -8,17 +8,7 @@ import { AVATAR_PRESETS, getDefaultAvatar } from '../utils/avatars';
 import { uploadToCloudinary } from '../utils/cloudinary';
 import './ProfileSetup.css';
 
-const calculateAge = (dobString) => {
-  if (!dobString) return 0;
-  const today = new Date();
-  const birthDate = new Date(dobString);
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const m = today.getMonth() - birthDate.getMonth();
-  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-    age--;
-  }
-  return age;
-};
+
 
 const ProfileSetup = () => {
   const navigate = useNavigate();
@@ -36,7 +26,7 @@ const ProfileSetup = () => {
     name: '',
     username: '',
     profession: '',
-    dob: '',
+    age: '',
     gender: '',
     bio: '',
     interests: [],
@@ -209,8 +199,8 @@ const ProfileSetup = () => {
           name: formData.name,
           username: formData.username.toLowerCase(),
           profession: formData.profession || '',
-          age: calculateAge(formData.dob),
-          dob: formData.dob || '',
+          age: parseInt(formData.age, 10) || 0,
+          dob: '',
           gender: formData.gender || '',
           bio: formData.bio || '',
           interests: formData.interests.join(', '),
@@ -314,12 +304,15 @@ const ProfileSetup = () => {
           {step === 1 && (
             <div className="animate-fade-in">
               <div className="input-group-premium">
-                <label>Date of Birth (Optional)</label>
+                <label>Age (Optional)</label>
                 <input 
-                  type="date" 
-                  name="dob" 
-                  value={formData.dob} 
+                  type="number" 
+                  name="age" 
+                  min="18"
+                  max="99"
+                  value={formData.age} 
                   onChange={handleChange} 
+                  placeholder="e.g. 21"
                   className="premium-input"
                 />
               </div>
@@ -353,17 +346,7 @@ const ProfileSetup = () => {
                   className="premium-input"
                 />
               </div>
-              <div className="gps-section">
-                <button 
-                  type="button" 
-                  className={`btn-gps ${gpsStatus === 'success' ? 'success' : ''}`} 
-                  onClick={handleGpsFetch}
-                  disabled={gpsLoading}
-                >
-                  <MapPin size={18} /> {gpsLoading ? 'Fetching GPS...' : gpsStatus === 'success' ? 'GPS Location Enabled' : 'Enable GPS Location'}
-                </button>
-                <p className="gps-hint">Precise GPS coordinates are used to find nearby buddies.</p>
-              </div>
+
             </div>
           )}
 

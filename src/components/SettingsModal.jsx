@@ -46,16 +46,6 @@ const SettingsModal = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      localStorage.removeItem('nb_auth_type');
-      await auth.signOut();
-      navigate('/login');
-    } catch (error) {
-      console.error("Logout failed", error);
-    }
-  };
-
   const handleDeleteAccount = async () => {
     const confirmed = window.confirm("⚠️ Are you absolutely sure? This will permanently delete your account, your profile, and all your data. This action CANNOT be undone.");
     if (!confirmed) return;
@@ -66,7 +56,8 @@ const SettingsModal = ({ isOpen, onClose }) => {
     setIsDeleting(true);
     const success = await deleteAccount();
     if (success) {
-      navigate('/login');
+      localStorage.clear();
+      navigate('/');
       onClose();
     }
     setIsDeleting(false);
@@ -158,13 +149,9 @@ const SettingsModal = ({ isOpen, onClose }) => {
           </div>
 
           <div className="danger-zone">
-            <button className="logout-btn" onClick={handleLogout} disabled={isDeleting}>
-              <LogOut size={20} />
-              <span>Log Out</span>
-            </button>
-            <button className="delete-account-btn" onClick={() => { onClose(); navigate('/delete-account'); }}>
+            <button className="delete-account-btn" onClick={handleDeleteAccount} disabled={isDeleting}>
               <Trash2 size={20} />
-              <span>Delete Account</span>
+              <span>{isDeleting ? 'Deleting...' : 'Delete Account'}</span>
             </button>
           </div>
         </div>

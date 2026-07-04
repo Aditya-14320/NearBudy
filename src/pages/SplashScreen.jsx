@@ -16,7 +16,7 @@ const SplashScreen = () => {
           navigate('/profile-setup');
         }
       } else {
-        navigate('/login');
+        // Wait for AppContext to complete the automatic anonymous login
       }
     }
   }, [loadingAuth, currentUser, navigate]);

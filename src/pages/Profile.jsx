@@ -6,18 +6,16 @@ import { useNavigate } from 'react-router-dom';
 import EditProfileModal from '../components/EditProfileModal';
 import SettingsModal from '../components/SettingsModal';
 import PremiumModal from '../components/PremiumModal';
-import UpgradeAccountModal from '../components/UpgradeAccountModal';
 import { getOptimizedProfileUrl } from '../utils/cloudinary';
 import './Profile.css';
 
 const Profile = () => {
-  const { currentUser, upgradeAccount, chats, requests, notifications } = useAppContext();
+  const { currentUser, chats, requests, notifications } = useAppContext();
   const navigate = useNavigate();
   
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
-  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
 
   const handleShare = async () => {
@@ -93,19 +91,6 @@ const Profile = () => {
         </div>
 
         <div className="profile-actions-list">
-          {currentUser.isGuest && (
-            <div className="guest-upgrade-banner" onClick={() => setIsUpgradeModalOpen(true)}>
-              <div className="upgrade-banner-content">
-                <Sparkles size={20} className="upgrade-banner-icon animate-pulse" />
-                <div className="upgrade-banner-text-wrapper">
-                  <h4>Save your account</h4>
-                  <p>Link Google or Email to save your profile & chat history.</p>
-                </div>
-              </div>
-              <ChevronRight size={18} className="upgrade-arrow" />
-            </div>
-          )}
-
           <div className="invite-banner-card" onClick={handleShare}>
             <div className="invite-icon-box">
               <Users size={24} color="white" />
@@ -153,11 +138,6 @@ const Profile = () => {
           onSuccess={() => {}} 
         />
       )}
-
-      <UpgradeAccountModal 
-        isOpen={isUpgradeModalOpen}
-        onClose={() => setIsUpgradeModalOpen(false)}
-      />
     </div>
   );
 };

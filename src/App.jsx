@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import SplashScreen from './pages/SplashScreen';
-import Login from './pages/Login';
 import ProfileSetup from './pages/ProfileSetup';
 import Home from './pages/Home';
 import MapPage from './pages/MapPage';
@@ -11,7 +10,6 @@ import ChatScreen from './pages/ChatScreen';
 import ChatsPage from './pages/ChatsPage';
 import PrivacyPolicy from './pages/Policy';
 import Terms from './pages/Terms';
-import DeleteAccount from './pages/DeleteAccount';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -20,7 +18,6 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<SplashScreen />} />
-        <Route path="/login" element={<Login />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<Terms />} />
 
@@ -29,9 +26,7 @@ function App() {
         
         {/* Protected Chat Screen (requires auth check but no global bottom navigation) */}
         <Route path="/chat/:id" element={<ProtectedRoute><ChatScreen /></ProtectedRoute>} />
-        
-        {/* Protected Delete Account */}
-        <Route path="/delete-account" element={<ProtectedRoute><DeleteAccount /></ProtectedRoute>} />
+
         
         {/* Protected/Main App Routes wrapped in Layout */}
         <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>

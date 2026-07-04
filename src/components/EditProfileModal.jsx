@@ -164,19 +164,7 @@ const EditProfileModal = ({ isOpen, onClose }) => {
         }
       }
 
-      const calculateAge = (dobString) => {
-        if (!dobString) return 0;
-        const today = new Date();
-        const birthDate = new Date(dobString);
-        let age = today.getFullYear() - birthDate.getFullYear();
-        const m = today.getMonth() - birthDate.getMonth();
-        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-          age--;
-        }
-        return age;
-      };
-
-      const computedAge = calculateAge(formData.dob);
+      const computedAge = parseInt(formData.age, 10) || 0;
 
       const dataToSave = {
         ...formData,
@@ -212,21 +200,9 @@ const EditProfileModal = ({ isOpen, onClose }) => {
     }
   };
 
-  // Helper to calculate age
-  const calculateAge = (dobString) => {
-    if (!dobString) return 0;
-    const today = new Date();
-    const birthDate = new Date(dobString);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const m = today.getMonth() - birthDate.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
-  };
 
-  // Calculate completion
-  const requiredFields = [formData.name, formData.city, formData.avatar, formData.bio, formData.profession, formData.dob, formData.interests.length > 0, formData.gender];
+
+  const requiredFields = [formData.name, formData.city, formData.avatar, formData.bio, formData.profession, formData.age, formData.interests.length > 0, formData.gender];
   const filledFields = requiredFields.filter(Boolean).length;
   const completionPercentage = Math.round((filledFields / requiredFields.length) * 100);
 
@@ -234,7 +210,7 @@ const EditProfileModal = ({ isOpen, onClose }) => {
   const previewUser = {
     ...currentUser,
     ...formData,
-    age: calculateAge(formData.dob),
+    age: parseInt(formData.age, 10) || 0,
     interests: formData.interests.join(', '),
     id: currentUser.id,
     isMock: true // Prevents actual tracking/waving in preview
@@ -341,12 +317,15 @@ const EditProfileModal = ({ isOpen, onClose }) => {
 
               <div className="form-row">
                 <div className="input-group flex-1">
-                  <label>Date of Birth</label>
+                  <label>Age</label>
                   <input 
-                    type="date" 
-                    name="dob"
+                    type="number" 
+                    name="age"
                     className="input-field" 
-                    value={formData.dob}
+                    placeholder="e.g. 21"
+                    min="18"
+                    max="99"
+                    value={formData.age}
                     onChange={handleChange}
                   />
                 </div>

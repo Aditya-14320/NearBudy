@@ -94,6 +94,20 @@ export const AppProvider = ({ children }) => {
         setCurrentUser(userData);
       } else {
         setCurrentUser(null);
+        if (!signingInAsGuest.current) {
+          signingInAsGuest.current = true;
+          console.log("[NearBudy Auth] Automatically signing in anonymously...");
+          signInAnonymously(auth)
+            .then(() => {
+              signingInAsGuest.current = false;
+            })
+            .catch((err) => {
+              console.error("[NearBudy Auth] Auto-sign in anonymously failed:", err);
+              signingInAsGuest.current = false;
+              setLoadingAuth(false);
+            });
+          return;
+        }
       }
       setLoadingAuth(false);
     });
@@ -374,11 +388,6 @@ export const AppProvider = ({ children }) => {
   // Actions
   const sendRequest = async (targetUser) => {
     if (!currentUser) return;
-    
-    if (currentUser.isGuest) {
-      alert("Guests cannot send requests. Please sign up for an account to chat!");
-      return;
-    }
 
     if (sentRequests.some(r => r.toId === targetUser.id)) {
       alert("You already sent a request to this user.");
@@ -504,11 +513,6 @@ export const AppProvider = ({ children }) => {
 
   const createQuickChat = async (targetUser) => {
     if (!currentUser) return null;
-
-    if (currentUser.isGuest) {
-      alert("Guests cannot use Quick Chat. Please sign up for an account!");
-      return null;
-    }
     
     const chatId = [currentUser.id, targetUser.id].sort().join('_');
     const existingChat = chats.find(c => c.id === chatId);
@@ -537,7 +541,6 @@ export const AppProvider = ({ children }) => {
   };
 
   const sendNotification = async (toUserId, type, message, fromUserId = null, fromUserObj = null) => {
-    if (currentUser?.isGuest && type !== 'nearby') return; // Guests can't send waves/views
     try {
       await addDoc(collection(db, "notifications"), {
         userId: toUserId,
@@ -569,26 +572,7 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const upgradeAccount = async (credential) => {
-    if (!auth.currentUser) return false;
-    try {
-      const result = await linkWithCredential(auth.currentUser, credential);
-      const user = result.user;
-      
-      // Mark as no longer guest in Firestore
-      await updateDoc(doc(db, "users", user.uid), {
-        isGuest: false,
-        name: user.displayName || currentUser.name,
-        avatar: user.photoURL || currentUser.avatar
-      });
-      
-      setCurrentUser(prev => ({ ...prev, isGuest: false }));
-      return true;
-    } catch (e) {
-      console.error("Upgrade Account Error:", e);
-      return false;
-    }
-  };
+  // Account upgrade is deprecated since the app is registration-free
 
   const checkUsernameUnique = async (username) => {
     if (!username) return false;
@@ -695,7 +679,6 @@ export const AppProvider = ({ children }) => {
       skippedUsers,
       markAsSkipped,
       deleteAccount,
-      upgradeAccount,
       checkUsernameUnique
     }}>
       {!loadingAuth && children}
