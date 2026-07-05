@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Flame, Bell, Search, Map, Sparkles, Zap, Crown, X } from 'lucide-react';
+import { Flame, Bell, Search, Map, ArrowRight, RotateCw, X, GraduationCap, SlidersHorizontal } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import ProfilePreviewModal from '../components/ProfilePreviewModal';
@@ -27,13 +27,11 @@ const Home = () => {
   const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Hyper-Dynamic Recommendation Algorithm
+  // Hyper-Dynamic Recommendation Algorithm (Tinder-like matches)
   const suggestions = useMemo(() => {
     if (!currentUser) return [];
 
-    // 1. Base Filter (Strict exclusion)
     const matchedIds = chats.flatMap(c => c.users || []);
-    const requestedIds = [...requests, ...sentRequests].map(r => r.fromId === currentUser.id ? r.toId : r.fromId);
     
     return nearbyUsers
       .filter(u => {
@@ -64,7 +62,7 @@ const Home = () => {
         
         // 🔄 ANTI-STALENESS: Heavy penalty for already seen in this session
         if (sessionViews.has(u.id)) {
-          score -= 1000; // Pushes them to the very bottom
+          score -= 1000;
         }
         
         // 🎲 FRESHNESS JITTER: High randomization for "Fresh on Refresh" feeling
@@ -73,25 +71,27 @@ const Home = () => {
         return { ...u, _score: score };
       })
       .sort((a, b) => b._score - a._score);
-  }, [nearbyUsers, currentUser, chats, requests, sentRequests, skippedUsers, sessionViews, refreshKey]);
+  }, [nearbyUsers, currentUser, chats, skippedUsers, sessionViews, refreshKey]);
+
+  // Search logic on suggestions
+  const displayUsers = useMemo(() => {
+    if (!searchQuery.trim()) return suggestions;
+    const query = searchQuery.toLowerCase();
+    return suggestions.filter(u => 
+      u.name.toLowerCase().includes(query) || 
+      (u.profession && u.profession.toLowerCase().includes(query)) ||
+      (u.college && u.college.toLowerCase().includes(query))
+    );
+  }, [suggestions, searchQuery]);
 
   const unreadNotifs = notifications?.filter(n => !n.read).length || 0;
   const totalAlerts = (requests?.length || 0) + unreadNotifs;
 
-  // Search logic
-  const displayUsers = searchQuery.trim() 
-    ? suggestions.filter(u => 
-        u.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        (u.profession && u.profession.toLowerCase().includes(searchQuery.toLowerCase()))
-      )
-    : suggestions;
-
-  // Auto-rotate logic: Aggressively cycle profiles every 30 seconds
+  // Auto-rotate Spotlight logic: cycle profiles every 30 seconds
   useEffect(() => {
     if (displayUsers.length <= 4) return;
     
     const interval = setInterval(() => {
-      // Mark top 2 users as viewed so they rotate out
       const topIds = displayUsers.slice(0, 2).map(u => u.id);
       topIds.forEach(id => markAsViewed(id));
       setRefreshKey(prev => prev + 1);
@@ -106,15 +106,16 @@ const Home = () => {
 
   return (
     <div className="home-container">
+      {/* Mockup Header */}
       <div className="home-header-new">
         <div className="logo-title">
           <div className="logo-box">
-            <Flame size={20} strokeWidth={1.5} color="white" fill="white" />
+            <Flame size={20} strokeWidth={2.5} color="white" fill="white" />
           </div>
           <h2>Nearby</h2>
         </div>
         <button className="icon-btn-transparent" onClick={() => navigate('/notifications')} style={{ position: 'relative' }}>
-          <Bell size={24} strokeWidth={1.5} />
+          <Bell size={24} strokeWidth={1.8} />
           {totalAlerts > 0 && (
             <span className="unread-badge-premium">
               {totalAlerts > 9 ? '9+' : totalAlerts}
@@ -124,43 +125,72 @@ const Home = () => {
       </div>
 
       <div className="home-content-new">
-        <div className="greeting-section">
-          <p className="hey-text">Hey {currentUser?.name?.split(' ')[0] || 'adi'} 👋</p>
-          <h1 className="discover-text">Discover people around <span className="text-muted">you</span></h1>
+        {/* Mockup Greeting Section */}
+        <div className="greeting-section-mockup">
+          <span className="hey-text-mockup">Hey {currentUser?.name?.split(' ')[0] || 'Aditya'} 👋</span>
+          <h1 className="discover-text-mockup">
+            Discover people <br />
+            around <span>you</span>
+          </h1>
+          <p className="subtext-mockup">Find and connect with students near you.</p>
         </div>
 
+        {/* Mockup Search Bar */}
         <div className="search-bar-new">
-          <Search size={20} strokeWidth={1.5} className="search-icon" />
+          <Search size={20} strokeWidth={1.8} className="search-icon" />
           <input 
             type="text" 
             placeholder="Search students by name or college" 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
+          <button className="filter-settings-btn">
+            <SlidersHorizontal size={18} strokeWidth={1.8} />
+          </button>
         </div>
 
+        {/* Mockup Map Banner Card */}
         <div className="map-banner-card" onClick={() => navigate('/map')}>
-          <div className="banner-icon-box">
-            <Map size={24} strokeWidth={1.5} color="#38bdf8" />
+          <div className="map-grid-overlay"></div>
+          
+          <div className="banner-left">
+            <div className="banner-icon-circle">
+              <Map size={20} strokeWidth={2} color="#f43f5e" />
+            </div>
+            <div className="banner-text">
+              <h3>See who's nearby</h3>
+              <p>Open the live map</p>
+            </div>
           </div>
-          <div className="banner-text">
-            <h3>See who's nearby</h3>
-            <p>Open the live map</p>
+
+          {/* Floating Radar & Avatars area */}
+          <div className="banner-radar-area">
+            <div className="radar-pulse-dot"></div>
+            <div className="radar-circle-pulse"></div>
+            <div className="radar-circle-pulse wave-2"></div>
+            
+            {nearbyUsers.slice(0, 3).map((user, idx) => (
+              <div key={user.id} className={`floating-avatar avatar-${idx + 1}`}>
+                <img src={getThumbnailUrl(user.avatar, 80)} alt="" />
+              </div>
+            ))}
           </div>
-          <Sparkles size={24} strokeWidth={1.5} className="banner-sparkle" />
+
+          <div className="banner-arrow-btn">
+            <ArrowRight size={18} strokeWidth={2.5} color="black" />
+          </div>
         </div>
 
-        {/* Action cards removed for Play Store release */}
-
-        <div className="suggested-section-new">
-          <div className="section-header">
-            <h3>{searchQuery.trim() ? 'Search Results' : 'Suggested for you'}</h3>
-            <div className="section-actions">
-              <button className="refresh-feed-btn" onClick={() => setRefreshKey(prev => prev + 1)}>
-                <Sparkles size={16} />
-                Refresh
+        {/* Suggested Section */}
+        <div className="suggested-section-mockup">
+          <div className="section-header-mockup">
+            <h3>Suggested for you</h3>
+            <div className="header-actions-mockup">
+              <button className="refresh-btn-pill" onClick={() => setRefreshKey(prev => prev + 1)}>
+                <RotateCw size={12} strokeWidth={2.5} />
+                <span>Refresh</span>
               </button>
-              {!searchQuery.trim() && <button className="see-all-btn">See all</button>}
+              <button className="see-all-link">See all</button>
             </div>
           </div>
           
@@ -171,21 +201,49 @@ const Home = () => {
                   markAsViewed(user.id);
                   handleUserClick(user);
                 }}>
-                  <img src={getThumbnailUrl(user.avatar, 300)} alt={user.name} />
+                  <img src={getThumbnailUrl(user.avatar, 400)} alt={user.name} />
+                  
+                  {/* Card Info Overlay */}
                   <div className="card-overlay">
+                    <div className="card-distance-row">
+                      <span className="online-green-dot"></span>
+                      <span>{user.distance} away</span>
+                    </div>
+                    
                     <h4>{user.name}, {user.age || 21}</h4>
+                    
+                    <div className="card-college-pill">
+                      <GraduationCap size={12} strokeWidth={2.5} />
+                      <span>{user.college || 'Campus Student'}</span>
+                    </div>
+
+                    {user.interests && user.interests.length > 0 && (
+                      <div className="card-interests-row">
+                        {user.interests.slice(0, 2).map((interest, idx) => (
+                          <span key={idx} className="interest-pill-outline">{interest}</span>
+                        ))}
+                        {user.interests.length > 2 && (
+                          <span className="interest-pill-more">+{user.interests.length - 2}</span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
+                
+                {/* Floating Skip/Remove Close Button */}
                 <button className="skip-user-btn" onClick={(e) => {
                   e.stopPropagation();
                   markAsSkipped(user.id);
                 }}>
-                  <X size={18} />
+                  <X size={14} strokeWidth={2.5} />
                 </button>
               </div>
             ))}
+            
             {displayUsers.length === 0 && (
-              <p style={{ color: '#a1a1aa', fontSize: 14 }}>No users found.</p>
+              <div className="empty-suggested-container">
+                <p>No new suggestions found. Try refreshing!</p>
+              </div>
             )}
           </div>
         </div>

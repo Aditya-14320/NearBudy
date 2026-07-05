@@ -37,8 +37,23 @@
   font-weight: 500;
 }
 
+.nav-item {
+  position: relative;
+}
+
 .nav-item.active {
   color: #f43f5e; /* Vibrant Pink/Rose to match image */
+}
+
+.nav-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  width: 16px;
+  height: 2.5px;
+  background: #f43f5e;
+  border-radius: 2px;
+  box-shadow: 0 0 8px rgba(244, 63, 94, 0.8);
 }
 
 .notif-tab {
