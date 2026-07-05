@@ -44,9 +44,25 @@ const Home = () => {
   } = useAppContext();
   
   const [searchQuery, setSearchQuery] = useState('');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Search Filter States
+  const [filterDistance, setFilterDistance] = useState('all');
+  const [filterAgeMin, setFilterAgeMin] = useState(18);
+  const [filterAgeMax, setFilterAgeMax] = useState(35);
+  const [filterCollege, setFilterCollege] = useState('all');
+  const [filterInterests, setFilterInterests] = useState([]);
+
+  // Time-of-day Greeting helper
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  };
 
   // Connection status helper based on real context relations
   const getConnectionStatus = (userId) => {
@@ -149,21 +165,64 @@ const Home = () => {
     );
   }, [suggestions, searchQuery]);
 
+  // Get distinct colleges and interests dynamically from DB for filter dropdowns
+  const uniqueColleges = useMemo(() => {
+    const colleges = nearbyUsers.map(u => u.college).filter(Boolean);
+    return ['all', ...new Set(colleges)];
+  }, [nearbyUsers]);
+
+  const uniqueInterests = useMemo(() => {
+    const interests = nearbyUsers.flatMap(u => u.interests || []);
+    return [...new Set(interests)];
+  }, [nearbyUsers]);
+
+  // Apply custom filtering to displayUsers
+  const filteredUsers = useMemo(() => {
+    return displayUsers.filter(u => {
+      // 1. Distance filter
+      if (filterDistance !== 'all') {
+        const dist = parseFloat(u.distance);
+        if (isNaN(dist)) {
+          if (filterDistance === '1km' && u.distance !== 'Very Close' && !u.distance.includes('m')) return false;
+        } else {
+          if (filterDistance === '1km' && dist > 1) return false;
+          if (filterDistance === '5km' && dist > 5) return false;
+          if (filterDistance === '10km' && dist > 10) return false;
+        }
+      }
+      
+      // 2. Age filter
+      const age = u.age || 21;
+      if (age < filterAgeMin || age > filterAgeMax) return false;
+      
+      // 3. College filter
+      if (filterCollege !== 'all' && u.college !== filterCollege) return false;
+      
+      // 4. Interests filter
+      if (filterInterests.length > 0) {
+        const hasMatch = filterInterests.some(interest => u.interests?.includes(interest));
+        if (!hasMatch) return false;
+      }
+      
+      return true;
+    });
+  }, [displayUsers, filterDistance, filterAgeMin, filterAgeMax, filterCollege, filterInterests]);
+
   const unreadNotifs = notifications?.filter(n => !n.read).length || 0;
   const totalAlerts = (requests?.length || 0) + unreadNotifs;
 
   // Auto-rotate logic for suggested cards
   useEffect(() => {
-    if (displayUsers.length <= 4) return;
+    if (filteredUsers.length <= 4) return;
     
     const interval = setInterval(() => {
-      const topIds = displayUsers.slice(0, 2).map(u => u.id);
+      const topIds = filteredUsers.slice(0, 2).map(u => u.id);
       topIds.forEach(id => markAsViewed(id));
       setRefreshKey(prev => prev + 1);
     }, 30000); 
 
     return () => clearInterval(interval);
-  }, [displayUsers, markAsViewed]);
+  }, [filteredUsers, markAsViewed]);
 
   const handleUserClick = (user) => {
     setSelectedUser(user);
@@ -190,17 +249,13 @@ const Home = () => {
       </div>
 
       <div className="home-content-new">
-        {/* Welcomer Greeting Section */}
+        {/* Polished Greeting Section */}
         <div className="greeting-section-mockup">
-          <span className="hey-text-mockup">Hey {currentUser?.name?.split(' ')[0] || 'User'} 👋</span>
-          <h1 className="discover-text-mockup">
-            Discover people <br />
-            around <span>you</span>
-          </h1>
-          <p className="subtext-mockup">Find and connect with students near you.</p>
+          <span className="hey-text-mockup">{getGreeting()} 👋</span>
+          <h1 className="discover-text-mockup">{currentUser?.name?.split(' ')[0] || 'User'}</h1>
         </div>
 
-        {/* Search Bar */}
+        {/* Search Bar with Settings icon */}
         <div className="search-bar-new">
           <Search size={20} strokeWidth={1.8} className="search-icon" />
           <input 
@@ -209,12 +264,108 @@ const Home = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-          <button className="filter-settings-btn">
+          <button 
+            className={`filter-settings-btn ${isFilterOpen ? 'active' : ''}`}
+            onClick={() => setIsFilterOpen(!isFilterOpen)}
+          >
             <SlidersHorizontal size={18} strokeWidth={1.8} />
           </button>
         </div>
 
-        {/* Live Animated Map Banner Card */}
+        {/* Collapsible Filter Panel */}
+        {isFilterOpen && (
+          <div className="filter-drawer-panel">
+            <div className="filter-group">
+              <label>Max Distance</label>
+              <div className="filter-options-row">
+                {['all', '1km', '5km', '10km'].map(d => (
+                  <button 
+                    key={d} 
+                    className={`filter-option-btn ${filterDistance === d ? 'active' : ''}`}
+                    onClick={() => setFilterDistance(d)}
+                  >
+                    {d === 'all' ? 'Anywhere' : `< ${d}`}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div className="filter-group">
+              <label>Age Range ({filterAgeMin} - {filterAgeMax})</label>
+              <div className="age-slider-row">
+                <input 
+                  type="range" 
+                  min="18" 
+                  max="35" 
+                  value={filterAgeMin} 
+                  onChange={(e) => setFilterAgeMin(Math.min(parseInt(e.target.value), filterAgeMax - 1))}
+                  className="age-slider"
+                />
+                <input 
+                  type="range" 
+                  min="18" 
+                  max="35" 
+                  value={filterAgeMax} 
+                  onChange={(e) => setFilterAgeMax(Math.max(parseInt(e.target.value), filterAgeMin + 1))}
+                  className="age-slider"
+                />
+              </div>
+            </div>
+
+            {uniqueColleges.length > 2 && (
+              <div className="filter-group">
+                <label>Filter by College</label>
+                <select 
+                  value={filterCollege} 
+                  onChange={(e) => setFilterCollege(e.target.value)}
+                  className="filter-select"
+                >
+                  {uniqueColleges.map(c => (
+                    <option key={c} value={c}>{c === 'all' ? 'All Colleges' : c}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {uniqueInterests.length > 0 && (
+              <div className="filter-group">
+                <label>Filter by Interests</label>
+                <div className="filter-interests-pills">
+                  {uniqueInterests.map(interest => {
+                    const isSelected = filterInterests.includes(interest);
+                    return (
+                      <button 
+                        key={interest} 
+                        className={`interest-select-pill ${isSelected ? 'active' : ''}`}
+                        onClick={() => {
+                          if (isSelected) {
+                            setFilterInterests(filterInterests.filter(i => i !== interest));
+                          } else {
+                            setFilterInterests([...filterInterests, interest]);
+                          }
+                        }}
+                      >
+                        {interest}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            
+            <button className="clear-filters-btn" onClick={() => {
+              setFilterDistance('all');
+              setFilterAgeMin(18);
+              setFilterAgeMax(35);
+              setFilterCollege('all');
+              setFilterInterests([]);
+            }}>
+              Reset Filters
+            </button>
+          </div>
+        )}
+
+        {/* Hero Live Animated Map Banner Card */}
         <div className="map-banner-card" onClick={() => navigate('/map')}>
           <div className="map-grid-overlay"></div>
           
@@ -244,8 +395,10 @@ const Home = () => {
             ))}
           </div>
 
-          <div className="banner-arrow-btn">
-            <ArrowRight size={18} strokeWidth={2.5} color="black" />
+          {/* "Open Radar →" button */}
+          <div className="banner-open-btn">
+            <span>Open Radar</span>
+            <ArrowRight size={14} strokeWidth={2.5} />
           </div>
         </div>
 
@@ -263,7 +416,7 @@ const Home = () => {
           </div>
           
           <div className="suggested-cards-scroll">
-            {displayUsers.map(user => {
+            {filteredUsers.map(user => {
               const status = getConnectionStatus(user.id);
               const userIsOnline = isOnline(user);
               
@@ -276,24 +429,35 @@ const Home = () => {
                     {/* Render actual profile photo directly from DB */}
                     <img src={user.avatar ? getThumbnailUrl(user.avatar, 400) : '/default-avatar.png'} alt={user.name} />
                     
+                    {/* Tiny Status Badge at the top-left */}
+                    <div className="card-top-status-badge">
+                      {userIsOnline ? (
+                        <span className="badge-capsule online">🟢 Online</span>
+                      ) : (
+                        <span className="badge-capsule active">🟡 Active</span>
+                      )}
+                      {user.isVerified && (
+                        <span className="badge-capsule verified">⭐ Verified</span>
+                      )}
+                    </div>
+
                     {/* Rich Card Info Overlay */}
                     <div className="card-overlay">
-                      {/* Rich Online status & distance row */}
-                      <div className="card-distance-row">
-                        <span className={`status-circle-dot ${userIsOnline ? 'online' : 'active'}`}></span>
-                        <span>
-                          {userIsOnline ? 'Online' : 'Active'}
-                          {user.distance ? ` • ${user.distance} away` : ''}
-                        </span>
-                      </div>
-                      
                       {/* Name & Age directly from DB */}
                       <h4>{user.name}{user.age ? `, ${user.age}` : ''}</h4>
                       
+                      {/* Proximity Location with Pin Icon */}
+                      {user.distance && (
+                        <div className="card-info-item">
+                          <span>📍</span>
+                          <span>{user.distance} away</span>
+                        </div>
+                      )}
+
                       {/* College badge with Pin icon */}
                       {user.college && (
-                        <div className="card-college-pill">
-                          <span style={{ marginRight: '4px' }}>📍</span>
+                        <div className="card-info-item">
+                          <span>🏫</span>
                           <span>{user.college}</span>
                         </div>
                       )}
@@ -306,7 +470,7 @@ const Home = () => {
                             const emoji = INTEREST_EMOJIS[lower] || '';
                             return (
                               <span key={idx} className="interest-span-item">
-                                {idx > 0 && <span className="interest-dot-separator"> • </span>}
+                                {idx > 0 && <span className="interest-dot-separator">  </span>}
                                 {emoji}{interest}
                               </span>
                             );
@@ -314,7 +478,7 @@ const Home = () => {
                         </div>
                       )}
 
-                      {/* Premium Connect / Chat Button on the card */}
+                      {/* Premium Connect / Chat Button on the card (height 48-52px) */}
                       {status === 'none' && (
                         <button className="card-connect-btn connect" onClick={(e) => handleConnectDirect(e, user)}>
                           Connect
@@ -349,7 +513,7 @@ const Home = () => {
               );
             })}
             
-            {displayUsers.length === 0 && (
+            {filteredUsers.length === 0 && (
               <div className="empty-suggested-container">
                 <p>No new profiles found in this area. Refresh feed!</p>
               </div>
