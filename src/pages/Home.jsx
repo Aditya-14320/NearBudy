@@ -7,44 +7,23 @@ import PremiumModal from '../components/PremiumModal';
 import { getThumbnailUrl } from '../utils/cloudinary';
 import './Home.css';
 
-// 14 Curated High-Quality portraits of real students (Unsplash free face database)
-const REAL_STUDENT_PHOTOS = [
-  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop", // Female
-  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop", // Male
-  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=400&fit=crop", // Female
-  "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop", // Male
-  "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop", // Female
-  "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&h=400&fit=crop", // Male
-  "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&h=400&fit=crop", // Female
-  "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=crop", // Male
-  "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&h=400&fit=crop", // Female
-  "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&h=400&fit=crop", // Male
-  "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=400&h=400&fit=crop", // Female
-  "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=400&h=400&fit=crop", // Male
-  "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=400&h=400&fit=crop", // Male
-  "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=400&h=400&fit=crop"  // Female
-];
-
-// Mapping raw "Guest_" names to friendly real names
-const GUEST_NAMES = ["Sarah", "Rahul", "Emily", "Aarav", "Priya", "Kabir", "Sneha", "Rohan", "Ananya", "Vikram", "Jessica", "Tanmay", "Neha", "Arjun"];
-
-// Interest emojis mapping
+// Interest emojis mapping for styling actual user interests
 const INTEREST_EMOJIS = {
-  design: '🎨',
-  gaming: '🎮',
-  coffee: '☕',
-  coding: '💻',
-  music: '🎵',
-  sports: '⚽',
-  travel: '✈️',
-  reading: '📚',
-  photography: '📷',
-  movies: '🎬',
-  dance: '💃',
-  cooking: '🍳',
-  art: '🎨',
-  fitness: '💪',
-  food: '🍕'
+  design: '🎨 ',
+  gaming: '🎮 ',
+  coffee: '☕ ',
+  coding: '💻 ',
+  music: '🎵 ',
+  sports: '⚽ ',
+  travel: '✈️ ',
+  reading: '📚 ',
+  photography: '📷 ',
+  movies: '🎬 ',
+  dance: '💃 ',
+  cooking: '🍳 ',
+  art: '🎨 ',
+  fitness: '💪 ',
+  food: '🍕 '
 };
 
 const Home = () => {
@@ -69,37 +48,7 @@ const Home = () => {
   const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Helper to map robot/default avatars to real student face photos
-  const getRealAvatarUrl = (user) => {
-    if (!user.avatar || user.avatar.includes('dicebear') || user.avatar.includes('bottts') || user.avatar.includes('default-avatar')) {
-      const seed = user.id || user.name || "default";
-      let hash = 0;
-      for (let i = 0; i < seed.length; i++) {
-        hash = seed.charCodeAt(i) + ((hash << 5) - hash);
-      }
-      const idx = Math.abs(hash) % REAL_STUDENT_PHOTOS.length;
-      return REAL_STUDENT_PHOTOS[idx];
-    }
-    return getThumbnailUrl(user.avatar, 400);
-  };
-
-  // Clean Guest_ names to human names
-  const getFriendlyName = (user) => {
-    if (user.name && user.name.startsWith('Guest_')) {
-      const num = parseInt(user.name.replace('Guest_', '')) || 0;
-      return GUEST_NAMES[num % GUEST_NAMES.length];
-    }
-    return user.name;
-  };
-
-  // Gender emoji indicator
-  const getGenderEmoji = (user) => {
-    if (user.gender === 'female') return '👩';
-    if (user.gender === 'male') return '👨';
-    return '✨';
-  };
-
-  // Connection status helper
+  // Connection status helper based on real context relations
   const getConnectionStatus = (userId) => {
     const isChat = chats.some(c => c.users?.includes(userId));
     if (isChat) return 'connected';
@@ -119,7 +68,7 @@ const Home = () => {
     return Date.now() - activeTime < 10 * 60 * 1000;
   };
 
-  // Direct action click triggers
+  // Direct connection action handlers
   const handleConnectDirect = (e, user) => {
     e.stopPropagation();
     sendRequest(user);
@@ -189,7 +138,7 @@ const Home = () => {
       .sort((a, b) => b._score - a._score);
   }, [nearbyUsers, currentUser, chats, skippedUsers, sessionViews, refreshKey]);
 
-  // Search logic on suggestions
+  // Search filter logic
   const displayUsers = useMemo(() => {
     if (!searchQuery.trim()) return suggestions;
     const query = searchQuery.toLowerCase();
@@ -203,7 +152,7 @@ const Home = () => {
   const unreadNotifs = notifications?.filter(n => !n.read).length || 0;
   const totalAlerts = (requests?.length || 0) + unreadNotifs;
 
-  // Auto-rotate Spotlight logic: cycle profiles every 30 seconds
+  // Auto-rotate logic for suggested cards
   useEffect(() => {
     if (displayUsers.length <= 4) return;
     
@@ -217,9 +166,7 @@ const Home = () => {
   }, [displayUsers, markAsViewed]);
 
   const handleUserClick = (user) => {
-    // Inject the real human face photo back into user object before opening preview modal
-    const updatedUser = { ...user, avatar: getRealAvatarUrl(user), name: getFriendlyName(user) };
-    setSelectedUser(updatedUser);
+    setSelectedUser(user);
   };
 
   return (
@@ -245,7 +192,7 @@ const Home = () => {
       <div className="home-content-new">
         {/* Welcomer Greeting Section */}
         <div className="greeting-section-mockup">
-          <span className="hey-text-mockup">Hey {currentUser?.name?.split(' ')[0] || 'Aditya'} 👋</span>
+          <span className="hey-text-mockup">Hey {currentUser?.name?.split(' ')[0] || 'User'} 👋</span>
           <h1 className="discover-text-mockup">
             Discover people <br />
             around <span>you</span>
@@ -253,7 +200,7 @@ const Home = () => {
           <p className="subtext-mockup">Find and connect with students near you.</p>
         </div>
 
-        {/* Search Bar with Settings icon */}
+        {/* Search Bar */}
         <div className="search-bar-new">
           <Search size={20} strokeWidth={1.8} className="search-icon" />
           <input 
@@ -279,7 +226,7 @@ const Home = () => {
               <h3>See who's nearby</h3>
               <p className="live-status-subtitle">
                 <span className="live-pulse-dot"></span>
-                {nearbyUsers.length > 0 ? nearbyUsers.length : 28} people nearby
+                {nearbyUsers.length} {nearbyUsers.length === 1 ? 'person' : 'people'} nearby
               </p>
             </div>
           </div>
@@ -292,7 +239,7 @@ const Home = () => {
             
             {nearbyUsers.slice(0, 3).map((user, idx) => (
               <div key={user.id} className={`floating-avatar avatar-${idx + 1} animated-float`}>
-                <img src={getRealAvatarUrl(user)} alt="" />
+                <img src={user.avatar ? getThumbnailUrl(user.avatar, 80) : '/default-avatar.png'} alt="" />
               </div>
             ))}
           </div>
@@ -319,8 +266,6 @@ const Home = () => {
             {displayUsers.map(user => {
               const status = getConnectionStatus(user.id);
               const userIsOnline = isOnline(user);
-              const friendlyName = getFriendlyName(user);
-              const genderEmoji = getGenderEmoji(user);
               
               return (
                 <div key={user.id} className="suggestion-card-wrapper">
@@ -328,36 +273,41 @@ const Home = () => {
                     markAsViewed(user.id);
                     handleUserClick(user);
                   }}>
-                    {/* Render high-quality human photo instead of robot */}
-                    <img src={getRealAvatarUrl(user)} alt={friendlyName} />
+                    {/* Render actual profile photo directly from DB */}
+                    <img src={user.avatar ? getThumbnailUrl(user.avatar, 400) : '/default-avatar.png'} alt={user.name} />
                     
                     {/* Rich Card Info Overlay */}
                     <div className="card-overlay">
                       {/* Rich Online status & distance row */}
                       <div className="card-distance-row">
                         <span className={`status-circle-dot ${userIsOnline ? 'online' : 'active'}`}></span>
-                        <span>{userIsOnline ? 'Online' : 'Active'} • {user.distance} away</span>
+                        <span>
+                          {userIsOnline ? 'Online' : 'Active'}
+                          {user.distance ? ` • ${user.distance} away` : ''}
+                        </span>
                       </div>
                       
-                      {/* Name with gender emoji */}
-                      <h4>{genderEmoji} {friendlyName}, {user.age || 21}</h4>
+                      {/* Name & Age directly from DB */}
+                      <h4>{user.name}{user.age ? `, ${user.age}` : ''}</h4>
                       
                       {/* College badge with Pin icon */}
-                      <div className="card-college-pill">
-                        <span style={{ marginRight: '4px' }}>📍</span>
-                        <span>{user.college || 'Campus Student'}</span>
-                      </div>
+                      {user.college && (
+                        <div className="card-college-pill">
+                          <span style={{ marginRight: '4px' }}>📍</span>
+                          <span>{user.college}</span>
+                        </div>
+                      )}
 
-                      {/* Emojified inline interest tags */}
+                      {/* Emojified inline interest tags from DB */}
                       {user.interests && user.interests.length > 0 && (
                         <div className="card-interests-inline">
                           {user.interests.slice(0, 3).map((interest, idx) => {
                             const lower = interest.toLowerCase();
-                            const emoji = INTEREST_EMOJIS[lower] || '✨';
+                            const emoji = INTEREST_EMOJIS[lower] || '';
                             return (
                               <span key={idx} className="interest-span-item">
                                 {idx > 0 && <span className="interest-dot-separator"> • </span>}
-                                {emoji} {interest}
+                                {emoji}{interest}
                               </span>
                             );
                           })}
@@ -401,7 +351,7 @@ const Home = () => {
             
             {displayUsers.length === 0 && (
               <div className="empty-suggested-container">
-                <p>No new students found around you. Refresh feed!</p>
+                <p>No new profiles found in this area. Refresh feed!</p>
               </div>
             )}
           </div>
