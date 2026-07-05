@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, Fragment, useMemo } from 'react';
-import { ArrowLeft, Image as ImageIcon, Send, MoreVertical, Check, CheckCheck, X, Smile, ShieldAlert, Ban } from 'lucide-react';
+import { ArrowLeft, Image as ImageIcon, Send, MoreVertical, Check, CheckCheck, X, Smile, ShieldAlert, Ban, Mic, Crown } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import { db, storage } from '../firebase';
@@ -8,6 +8,25 @@ import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, update
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { getThumbnailUrl } from '../utils/cloudinary';
 import './ChatScreen.css';
+
+const isUserPremium = (user) => {
+  if (!user) return false;
+  if (!user.isPremium) return false;
+  if (!user.premiumExpiresAt) return false;
+  return new Date(user.premiumExpiresAt).getTime() > Date.now();
+};
+
+const VerifiedBadge = () => (
+  <svg 
+    viewBox="0 0 24 24" 
+    width="15" 
+    height="15" 
+    className="premium-verified-badge" 
+    style={{ color: '#3b82f6', fill: 'currentColor', marginLeft: '5px', verticalAlign: 'middle', display: 'inline-block', flexShrink: 0 }}
+  >
+    <path d="M23 12l-2.44-2.79.34-3.69-3.61-.82-1.89-3.2L12 2.96 8.6 1.5 6.71 4.7 3.1 5.52l.34 3.7L1 12l2.44 2.79-.34 3.69 3.61.82 1.89 3.2L12 21.04l3.4 1.46 1.89-3.2 3.61-.82-.34-3.69L23 12zm-13 5l-4-4 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+  </svg>
+);
 
 const dayLabel = (dateObj) => {
   if (!dateObj) return "Just now";
@@ -24,10 +43,108 @@ const dayLabel = (dateObj) => {
   });
 };
 
+const getMessageGroupClass = (msg, index, items) => {
+  const prev = items[index - 1];
+  const next = items[index + 1];
+  
+  const isPrevSame = prev && prev.senderId === msg.senderId;
+  const isNextSame = next && next.senderId === msg.senderId;
+  
+  if (isPrevSame && isNextSame) return 'group-middle';
+  if (isPrevSame) return 'group-end';
+  if (isNextSame) return 'group-start';
+  return 'group-single';
+};
+
+// Custom Voice Message HTML5 Audio Player
+const VoiceMessagePlayer = ({ audioUrl, duration }) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const audioRef = useRef(null);
+
+  useEffect(() => {
+    const audio = new Audio(audioUrl);
+    audioRef.current = audio;
+
+    const updateTime = () => {
+      setCurrentTime(audio.currentTime);
+      setProgress((audio.currentTime / audio.duration) * 100 || 0);
+    };
+
+    const handleEnd = () => {
+      setIsPlaying(false);
+      setProgress(0);
+      setCurrentTime(0);
+    };
+
+    audio.addEventListener('timeupdate', updateTime);
+    audio.addEventListener('ended', handleEnd);
+
+    return () => {
+      audio.pause();
+      audio.removeEventListener('timeupdate', updateTime);
+      audio.removeEventListener('ended', handleEnd);
+    };
+  }, [audioUrl]);
+
+  const togglePlay = () => {
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current.play().catch(err => console.error("Playback error:", err));
+      setIsPlaying(true);
+    }
+  };
+
+  const handleSliderChange = (e) => {
+    const value = Number(e.target.value);
+    if (audioRef.current && audioRef.current.duration) {
+      const newTime = (value / 100) * audioRef.current.duration;
+      audioRef.current.currentTime = newTime;
+      setProgress(value);
+      setCurrentTime(newTime);
+    }
+  };
+
+  const formatTime = (time) => {
+    const m = Math.floor(time / 60);
+    const s = Math.floor(time % 60);
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
+  return (
+    <div className="voice-player-container" onClick={e => e.stopPropagation()}>
+      <button className="play-pause-btn" onClick={togglePlay}>
+        {isPlaying ? (
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        ) : (
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        )}
+      </button>
+      <div className="player-timeline-wrapper">
+        <input 
+          type="range" 
+          min="0" 
+          max="100" 
+          value={progress} 
+          onChange={handleSliderChange} 
+          className="player-slider"
+        />
+        <div className="player-time-row">
+          <span>{formatTime(currentTime)}</span>
+          <span>{formatTime(duration || 0)}</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const ChatScreen = () => {
-  const { id } = useParams();
+  const id = useParams().id;
   const navigate = useNavigate();
-  const { chats, currentUser, nearbyUsers, reportUser, blockUser } = useAppContext();
+  const { chats, currentUser, nearbyUsers, reportUser, blockUser, sendNotification } = useAppContext();
   
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
@@ -37,6 +154,24 @@ const ChatScreen = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+
+  // Upgraded States
+  const [selectedMessageId, setSelectedMessageId] = useState(null);
+  const [lightboxImage, setLightboxImage] = useState(null);
+  const [heartPops, setHeartPops] = useState([]);
+
+  // Theme Wallpaper state
+  const [chatTheme, setChatTheme] = useState(() => localStorage.getItem(`nb_chat_theme_${id}`) || 'dark-space');
+
+  // Audio Recording States
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const recordingIntervalRef = useRef(null);
+
+  const lastTap = useRef({});
+
   const { chatUser, isOnline, lastActiveText } = useMemo(() => {
     const fallback = { name: "User", avatar: "https://i.pravatar.cc/150" };
     const existingChat = chats.find(c => c.id === id);
@@ -98,6 +233,8 @@ const ChatScreen = () => {
           id: doc.id,
           text: data.text,
           imageUrl: data.imageUrl,
+          audioUrl: data.audioUrl,
+          audioDuration: data.audioDuration,
           senderId: data.senderId,
           sender: data.senderId === currentUser?.id ? 'me' : 'them',
           time: dateObj ? dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now',
@@ -277,7 +414,43 @@ const ChatScreen = () => {
     }
   };
 
-  const handleBlock = async () => {
+  // Quick Wave Hello greeting for new chats
+  const handleWaveHello = async () => {
+    if (!currentUser || isUploading) return;
+    try {
+      await addDoc(collection(db, "chats", id, "messages"), {
+        text: "👋 Waved hello!",
+        senderId: currentUser.id,
+        seen: false,
+        timestamp: serverTimestamp()
+      });
+
+      const existingChat = chats.find(c => c.id === id);
+      const otherUserId = existingChat?.users?.find(uid => uid !== currentUser.id);
+
+      const updateData = {
+        lastMessage: "👋 Waved hello!",
+        updatedAt: serverTimestamp(),
+      };
+      
+      if (otherUserId) {
+        updateData[`unreadCount.${otherUserId}`] = increment(1);
+        sendNotification(
+          otherUserId, 
+          'wave', 
+          'Someone waved at you 👋', 
+          currentUser.id, 
+          { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar }
+        );
+      }
+
+      await updateDoc(doc(db, "chats", id), updateData);
+    } catch (e) {
+      console.error("Wave hello failed:", e);
+    }
+  };
+
+  const handleBlockUser = async () => {
     if (window.confirm(`Are you sure you want to block ${chatUser.name}? They will no longer be able to message you.`)) {
       await blockUser(chatUser);
       alert("User blocked.");
@@ -285,7 +458,158 @@ const ChatScreen = () => {
     }
   };
 
-  // Group by day
+  // Touch handlers to separate single tap from double tap
+  const handleMessageTouch = (e, msgId) => {
+    const now = Date.now();
+    const DOUBLE_PRESS_DELAY = 300;
+    if (lastTap.current[msgId] && (now - lastTap.current[msgId] < DOUBLE_PRESS_DELAY)) {
+      handleReaction(msgId, '❤️');
+      
+      const x = e.clientX || (e.touches && e.touches[0]?.clientX) || window.innerWidth / 2;
+      const y = e.clientY || (e.touches && e.touches[0]?.clientY) || window.innerHeight / 2;
+      
+      triggerHeartPop(x, y);
+      setSelectedMessageId(null);
+    } else {
+      setSelectedMessageId(prev => prev === msgId ? null : msgId);
+    }
+    lastTap.current[msgId] = now;
+  };
+
+  const triggerHeartPop = (x, y) => {
+    const popId = Date.now() + Math.random();
+    setHeartPops(prev => [...prev, { id: popId, x, y }]);
+    setTimeout(() => {
+      setHeartPops(prev => prev.filter(h => h.id !== popId));
+    }, 800);
+  };
+
+  // Toggle Wallpaper Theme
+  const toggleTheme = () => {
+    const isPremium = currentUser?.isPremium && currentUser?.premiumExpiresAt && new Date(currentUser.premiumExpiresAt).getTime() > Date.now();
+    const tier = isPremium ? (currentUser?.premiumPlan || 'yearly') : null;
+
+    if (tier !== 'monthly' && tier !== 'yearly') {
+      alert("🔒 Chat Wallpapers are exclusive to Monthly and Yearly premium members!");
+      return;
+    }
+    const themes = ['dark-space', 'neon-grid', 'deep-ocean', 'sunset-aura'];
+    const currentIndex = themes.indexOf(chatTheme);
+    const nextIndex = (currentIndex + 1) % themes.length;
+    const nextTheme = themes[nextIndex];
+    setChatTheme(nextTheme);
+    localStorage.setItem(`nb_chat_theme_${id}`, nextTheme);
+  };
+
+  // Voice Note Recording functions
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunksRef.current = [];
+      
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      mediaRecorderRef.current = mediaRecorder;
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) {
+          audioChunksRef.current.push(e.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        if (audioChunksRef.current.length === 0) return;
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        stream.getTracks().forEach(track => track.stop());
+        
+        if (audioBlob.size > 1000) {
+          await uploadAudioMessage(audioBlob, recordingTime);
+        }
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      setRecordingTime(0);
+
+      recordingIntervalRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+    } catch (err) {
+      console.error("Failed to start recording:", err);
+      alert("Microphone permission denied or not supported on this device.");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      clearInterval(recordingIntervalRef.current);
+      setIsRecording(false);
+    }
+  };
+
+  const cancelRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      audioChunksRef.current = [];
+      mediaRecorderRef.current.stop();
+      clearInterval(recordingIntervalRef.current);
+      setIsRecording(false);
+      setRecordingTime(0);
+    }
+  };
+
+  const uploadAudioMessage = async (blob, durationSec) => {
+    setIsUploading(true);
+    try {
+      const audioRef = ref(storage, `chat_audio/${id}/${Date.now()}.webm`);
+      const uploadTask = uploadBytesResumable(audioRef, blob);
+      
+      const downloadURL = await new Promise((resolve, reject) => {
+        uploadTask.on('state_changed', 
+          null,
+          (error) => reject(error),
+          async () => {
+            const url = await getDownloadURL(uploadTask.snapshot.ref);
+            resolve(url);
+          }
+        );
+      });
+
+      await addDoc(collection(db, "chats", id, "messages"), {
+        audioUrl: downloadURL,
+        audioDuration: durationSec,
+        senderId: currentUser.id,
+        seen: false,
+        timestamp: serverTimestamp()
+      });
+
+      const existingChat = chats.find(c => c.id === id);
+      const otherUserId = existingChat?.users?.find(uid => uid !== currentUser.id);
+
+      const updateData = {
+        lastMessage: `🎵 Voice Note (${formatDuration(durationSec)})`,
+        updatedAt: serverTimestamp(),
+      };
+      
+      if (otherUserId) {
+        updateData[`unreadCount.${otherUserId}`] = increment(1);
+      }
+
+      await updateDoc(doc(db, "chats", id), updateData);
+    } catch (e) {
+      console.error("Audio upload failed:", e);
+      alert("Failed to send voice note.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const formatDuration = (sec) => {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
+  // Group messages by day
   const grouped = [];
   messages.forEach((m) => {
     const d = dayLabel(m.dateObj);
@@ -295,7 +619,7 @@ const ChatScreen = () => {
   });
 
   return (
-    <div className="chat-screen animate-fade-in">
+    <div className={`chat-screen theme-${chatTheme} animate-fade-in`}>
       <div className="chat-header">
         <button className="icon-btn back-btn" onClick={() => navigate(-1)}>
           <ArrowLeft size={22} />
@@ -307,7 +631,15 @@ const ChatScreen = () => {
             {isOnline && <span className="online-dot-header"></span>}
           </div>
           <div className="header-info">
-            <h3>{chatUser.name}</h3>
+            <h3>
+              {chatUser.name}
+              {isUserPremium(chatUser) && <VerifiedBadge />}
+              {isUserPremium(chatUser) && (chatUser.premiumPlan === 'yearly' || !chatUser.premiumPlan) && (
+                <span className="yearly-supporter-badge" style={{ color: '#fbbf24', marginLeft: '5px', verticalAlign: 'middle', display: 'inline-flex', alignItems: 'center' }} title="Yearly Supporter">
+                  <Crown size={14} fill="#fbbf24" />
+                </span>
+              )}
+            </h3>
             <span className={`status ${isOnline ? 'online' : 'offline'}`}>
               {otherTyping ? "typing..." : (
                 <>
@@ -319,7 +651,6 @@ const ChatScreen = () => {
           </div>
         </div>
 
-
         <div className="header-actions">
           <button className="icon-btn" onClick={() => setIsMenuOpen(!isMenuOpen)}>
             <MoreVertical size={22} />
@@ -327,10 +658,13 @@ const ChatScreen = () => {
           
           {isMenuOpen && (
             <div className="header-dropdown animate-fade-in">
+              <button className="dropdown-item" onClick={toggleTheme}>
+                🎨 Change Theme
+              </button>
               <button className="dropdown-item" onClick={() => { setIsReportModalOpen(true); setIsMenuOpen(false); }}>
                 <ShieldAlert size={18} /> Report User
               </button>
-              <button className="dropdown-item block" onClick={() => { handleBlock(); setIsMenuOpen(false); }}>
+              <button className="dropdown-item block" onClick={() => { handleBlockUser(); setIsMenuOpen(false); }}>
                 <Ban size={18} /> Block User
               </button>
             </div>
@@ -340,47 +674,98 @@ const ChatScreen = () => {
 
       <div className="messages-container">
         {grouped.length === 0 && (
-          <div className="empty-chat-placeholder">
-            <div className="empty-chat-icon">✨</div>
-            <p>Start your private conversation</p>
+          <div className="empty-chat-container animate-fade-in">
+            <div className="empty-chat-placeholder">
+              <div className="empty-chat-icon">✨</div>
+              <p>No messages yet. Kick off the chat with a wave!</p>
+            </div>
+            <button className="wave-hello-btn animate-pulse" onClick={handleWaveHello}>
+              Say Hello 👋
+            </button>
           </div>
         )}
+        
         {grouped.map((g) => (
           <Fragment key={g.day}>
             <div className="day-separator">
               <span>{g.day}</span>
             </div>
-            {g.items.map(msg => (
-              <div key={msg.id} className={`message-wrapper ${msg.sender} animate-slide-up`}>
-                <div className={`message-bubble ${msg.sender} ${msg.imageUrl && !msg.text ? 'image-only' : ''}`}>
-                  {msg.imageUrl && (
-                    <img src={msg.imageUrl} alt="attachment" className="chat-attached-image" onLoad={scrollToBottom} />
-                  )}
-                  {msg.text && <p>{msg.text}</p>}
-                  <div className="message-meta">
-                    <span className="message-time">{msg.time}</span>
-                    {msg.sender === 'me' && (
-                      <span className="message-status">
-                        {msg.status === 'seen' ? <CheckCheck size={14} className="tick-seen" /> : <Check size={14} className="tick-sent" />}
-                      </span>
+            {g.items.map((msg, index) => {
+              const groupClass = getMessageGroupClass(msg, index, g.items);
+              const isSelected = selectedMessageId === msg.id;
+              return (
+                <div key={msg.id} className={`message-wrapper ${msg.sender} ${groupClass} animate-slide-up`}>
+                  <div className="message-bubble-container">
+                    {/* Touch Friendly Floating Reaction Picker */}
+                    {isSelected && (
+                      <div className="reaction-picker-inline animate-scale-in">
+                        {['❤️', '🔥', '👋', '😂', '👍', '😮'].map(emoji => (
+                          <button 
+                            key={emoji} 
+                            className="react-picker-btn" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleReaction(msg.id, emoji);
+                              setSelectedMessageId(null);
+                            }}
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    <div 
+                      className={`message-bubble ${msg.sender} ${msg.imageUrl && !msg.text ? 'image-only' : ''} ${msg.audioUrl ? 'audio-bubble' : ''}`}
+                      onClick={(e) => handleMessageTouch(e, msg.id)}
+                    >
+                      {msg.imageUrl && (
+                        <img 
+                          src={msg.imageUrl} 
+                          alt="attachment" 
+                          className="chat-attached-image" 
+                          onLoad={scrollToBottom} 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setLightboxImage(msg.imageUrl);
+                          }}
+                        />
+                      )}
+                      {msg.audioUrl && (
+                        <VoiceMessagePlayer audioUrl={msg.audioUrl} duration={msg.audioDuration} />
+                      )}
+                      {msg.text && <p>{msg.text}</p>}
+                      <div className="message-meta">
+                        <span className="message-time">{msg.time}</span>
+                        {msg.sender === 'me' && (
+                          <span className="message-status">
+                            {msg.status === 'seen' ? <CheckCheck size={14} className="tick-seen" /> : <Check size={14} className="tick-sent" />}
+                          </span>
+                        )}
+                      </div>
+                      {msg.reaction && <div className="msg-reaction-badge animate-scale-in">{msg.reaction}</div>}
+                    </div>
+
+                    {/* Inline timestamp & read status drawer toggled on select */}
+                    {isSelected && (
+                      <div className="message-details-inline animate-fade-in">
+                        <span>{msg.dateObj ? msg.dateObj.toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'Just now'}</span>
+                        {msg.sender === 'me' && (
+                          <span className="seen-status">
+                            • {msg.status === 'seen' ? 'Read' : 'Delivered'}
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
-                  {msg.reaction && <div className="msg-reaction-badge animate-scale-in">{msg.reaction}</div>}
                 </div>
-                
-                {msg.sender === 'them' && (
-                  <div className="reaction-picker-mini">
-                    {['❤️', '🔥', '👋', '😂'].map(r => (
-                      <button key={r} onClick={() => handleReaction(msg.id, r)} className="react-btn">{r}</button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </Fragment>
         ))}
+        
         {otherTyping && (
-          <div className="message-wrapper them">
+          <div className="message-wrapper them group-single">
             <div className="message-bubble them typing-indicator">
               <span className="dot"></span>
               <span className="dot"></span>
@@ -407,54 +792,113 @@ const ChatScreen = () => {
         )}
         
         <div className="chat-input-area">
-          <div className="input-glass-wrapper">
-            <button className="icon-btn-secondary" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
-              <ImageIcon size={22} />
-            </button>
-            
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              onChange={handleImagePick} 
-              accept="image/*" 
-              style={{ display: 'none' }} 
-            />
-            
-            <textarea 
-              className="chat-input" 
-              placeholder="Message..." 
-              value={inputText}
-              rows={1}
-              onChange={(e) => {
-                handleType(e.target.value);
-                e.target.style.height = 'auto';
-                e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSend();
-                }
-              }}
-              onFocus={scrollToBottom}
-              disabled={isUploading}
-            />
-            
-            <button className="icon-btn-secondary emoji-btn" disabled={isUploading}>
-              <Smile size={22} />
-            </button>
-          </div>
+          {isRecording ? (
+            <div className="recording-panel animate-fade-in">
+              <button className="cancel-record-btn" onClick={cancelRecording} disabled={isUploading}>
+                <X size={18} />
+              </button>
+              <div className="recording-indicator">
+                <span className="recording-dot-glow"></span>
+                <span>Recording {formatDuration(recordingTime)}</span>
+              </div>
+              <div className="recording-waves">
+                <span className="wave-bar"></span>
+                <span className="wave-bar"></span>
+                <span className="wave-bar"></span>
+                <span className="wave-bar"></span>
+              </div>
+              <button className="send-voice-btn active" onClick={stopRecording} disabled={isUploading}>
+                <Send size={18} />
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="input-glass-wrapper">
+                <button className="icon-btn-secondary" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+                  <ImageIcon size={22} />
+                </button>
+                
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleImagePick} 
+                  accept="image/*" 
+                  style={{ display: 'none' }} 
+                />
+                
+                <textarea 
+                  className="chat-input" 
+                  placeholder="Message..." 
+                  value={inputText}
+                  rows={1}
+                  onChange={(e) => {
+                    handleType(e.target.value);
+                    e.target.style.height = 'auto';
+                    e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
+                  onFocus={scrollToBottom}
+                  disabled={isUploading}
+                />
+                
+                <button className="icon-btn-secondary emoji-btn" disabled={isUploading}>
+                  <Smile size={22} />
+                </button>
+              </div>
 
-          <button 
-            className={`send-btn ${(inputText.trim() || imageFile) && !isUploading ? 'active' : ''}`} 
-            onClick={handleSend}
-            disabled={isUploading}
-          >
-            <Send size={20} />
-          </button>
+              {(inputText.trim() || imageFile) ? (
+                <button 
+                  className="send-btn active" 
+                  onClick={handleSend}
+                  disabled={isUploading}
+                >
+                  <Send size={20} />
+                </button>
+              ) : (
+                <button 
+                  className="send-btn active mic-trigger-btn"
+                  onClick={startRecording}
+                  disabled={isUploading}
+                >
+                  <Mic size={20} />
+                </button>
+              )}
+            </>
+          )}
         </div>
         <p className="ugc-notice">Keep it respectful. All content is moderated.</p>
       </div>
+
+      {/* Screen Space Double-Tap Like heart bubbles */}
+      {heartPops.map(h => (
+        <span 
+          key={h.id} 
+          className="heart-pop-animation" 
+          style={{ left: h.x - 24, top: h.y - 24 }}
+        >
+          ❤️
+        </span>
+      ))}
+
+      {/* Full Screen Image Lightbox Modal */}
+      {lightboxImage && (
+        <div className="lightbox-overlay animate-fade-in" onClick={() => setLightboxImage(null)}>
+          <button className="lightbox-close-btn" onClick={() => setLightboxImage(null)}>
+            <X size={28} />
+          </button>
+          <img 
+            src={lightboxImage} 
+            alt="Full Preview" 
+            className="lightbox-image animate-scale-in" 
+            onClick={e => e.stopPropagation()} 
+          />
+        </div>
+      )}
 
       <ReportModal 
         user={chatUser} 

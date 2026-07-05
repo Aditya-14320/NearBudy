@@ -1,9 +1,8 @@
 .map-page-container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  background: #0a0a0e; /* Very dark background */
-  padding-bottom: 90px; /* Space for BottomNav */
+  height: calc(100vh - 70px - env(safe-area-inset-bottom)); /* Account for bottom navigation bar height */
+  background: #06050a; /* Sleek dark gradient start background */
   font-family: 'Inter', sans-serif;
   overflow: hidden;
 }
@@ -12,9 +11,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
+  padding: 16px 20px 8px;
   color: white;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   z-index: 10;
 }
 
@@ -22,6 +20,7 @@
   font-size: 18px;
   font-weight: 800;
   margin: 0;
+  letter-spacing: -0.3px;
 }
 
 .icon-btn-transparent {
@@ -32,41 +31,109 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px;
+  padding: 6px;
+  border-radius: 50%;
+  transition: background-color 0.2s, transform 0.1s;
 }
 
 .icon-btn-transparent:active {
   transform: scale(0.9);
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
-.map-box-container {
+/* Segmented Toggle Control */
+.view-toggle-row {
+  display: flex;
+  margin: 8px 16px 10px; /* Reduced outer spacing to 16px */
+  background: rgba(255, 255, 255, 0.03);
+  padding: 4px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  z-index: 10;
+}
+
+.toggle-tab-btn {
   flex: 1;
-  margin: 16px 20px;
-  border-radius: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toggle-tab-btn.active {
+  background: var(--bg-tertiary);
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Horizontal Filters Carousel */
+.filters-carousel {
+  display: flex;
+  gap: 8px;
+  padding: 2px 16px 16px; /* Spacing below is 16px to map */
+  overflow-x: auto;
+  scrollbar-width: none;
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.filters-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-pill-btn {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-pill-btn.active {
+  background: linear-gradient(135deg, #ec4899, #8b5cf6);
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
+}
+
+/* Radar Container & Grid Map */
+.map-box-container {
+  height: 380px; /* Reduced from flex: 1 to a fixed 380px on mobile */
+  flex-shrink: 0;
+  margin: 0 16px 16px; /* Reduced outer spacing to 16px */
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   position: relative;
   overflow: hidden;
-  /* Grid Background matching the image */
-  background-color: #0d0a14;
+  background-color: #0b0811;
   background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-  background-size: 40px 40px;
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 44px 44px;
   background-position: center center;
-  box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.5);
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.6);
   z-index: 1;
 }
 
-/* Add a subtle radial glow behind the center to match the image's pinkish center glow */
 .map-box-container::before {
   content: '';
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 250px;
-  height: 250px;
-  background: radial-gradient(circle, rgba(162, 28, 175, 0.15) 0%, transparent 70%);
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(162, 28, 175, 0.12) 0%, transparent 70%);
   z-index: 0;
   pointer-events: none;
 }
@@ -77,36 +144,56 @@
   z-index: 1;
 }
 
-/* Custom Leaflet Pin Styling */
-.custom-leaflet-icon {
-  background: transparent;
-  border: none;
+/* Recenter FAB */
+.recenter-fab {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 44px;
+  height: 44px;
+  background: rgba(20, 15, 28, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  z-index: 1000;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+.recenter-fab:active {
+  transform: scale(0.92);
+  background: rgba(30, 25, 40, 0.95);
 }
 
 .nearby-pill {
   position: absolute;
-  top: 20px;
-  left: 20px;
-  background: rgba(20, 15, 25, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  top: 16px;
+  left: 16px;
+  background: rgba(15, 12, 22, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   color: white;
-  padding: 8px 16px;
-  border-radius: 24px;
-  font-size: 14px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
   font-weight: 700;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   z-index: 1000;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .nearby-pill .sparkle {
-  color: #f43f5e; /* Vibrant pink */
+  color: #f43f5e;
 }
 
-/* Center Pin (User Location) */
+/* Center Pin (Self Position) */
 .center-pin-wrapper {
   position: relative;
   display: flex;
@@ -117,20 +204,16 @@
 }
 
 .center-pin {
-  width: 32px;
-  height: 32px;
-  background: #a21caf; /* Purple */
+  width: 30px;
+  height: 30px;
+  background: #a21caf;
   border-radius: 50%;
-  border: 3px solid #b45309; /* Goldish/Bronze border matching image */
+  border: 2px solid #b45309;
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 2;
-  box-shadow: 0 0 15px rgba(162, 28, 175, 0.6);
-}
-
-.center-pin svg {
-  margin-bottom: 2px;
+  box-shadow: 0 0 15px rgba(162, 28, 175, 0.5);
 }
 
 .pin-pulse-1, .pin-pulse-2 {
@@ -138,7 +221,7 @@
   width: 100%;
   height: 100%;
   background: transparent;
-  border: 2px solid rgba(162, 28, 175, 0.4);
+  border: 1.5px solid rgba(162, 28, 175, 0.4);
   border-radius: 50%;
   animation: pulse-ring 3s infinite cubic-bezier(0.215, 0.61, 0.355, 1);
 }
@@ -149,125 +232,415 @@
 
 @keyframes pulse-ring {
   0% { transform: scale(0.8); opacity: 0.8; }
-  100% { transform: scale(2.5); opacity: 0; }
+  100% { transform: scale(2.6); opacity: 0; }
 }
 
-/* User Pin (Other Users) */
-.user-pin {
+/* Custom Leaflet Marker Styling */
+.custom-leaflet-icon {
+  background: transparent;
+  border: none;
+}
+
+.user-pin-wrapper {
+  position: relative;
   width: 44px;
   height: 44px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.pin-distance-label {
+  position: absolute;
+  bottom: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(11, 8, 17, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-secondary);
+  font-size: 8px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+  z-index: 5;
+}
+
+.user-pin-wrapper.selected {
+  transform: scale(1.2);
+  z-index: 1000;
+}
+
+.user-pin {
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  background: #4a044e; /* Dark purple */
-  border: 2px solid #be123c; /* Dark red/pink border */
+  background: #111015;
+  border: 2px solid #8b5cf6; /* default Violet */
   display: flex;
   justify-content: center;
   align-items: center;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-  transition: transform 0.2s;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
 }
 
-.user-pin:active {
-  transform: scale(0.9);
+.user-pin.online {
+  border-color: #10b981; /* Green glow for online */
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+}
+
+.user-pin-wrapper.selected .user-pin {
+  border-color: #f43f5e; /* Hot pink for selected */
+  box-shadow: 0 0 12px rgba(244, 63, 94, 0.6);
 }
 
 .user-pin img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0.9;
-  mix-blend-mode: luminosity; 
-  filter: sepia(1) hue-rotate(250deg) saturate(3) brightness(0.7); 
+  border-radius: 50%;
 }
 
-.user-pin.locked {
-  border-color: rgba(255, 255, 255, 0.2);
-  background: #1a1a24;
+.pin-pulse {
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  right: -5px;
+  bottom: -5px;
+  border-radius: 50%;
+  border: 2px solid rgba(244, 63, 94, 0.5);
+  animation: marker-pulse-ring 2s infinite cubic-bezier(0.215, 0.61, 0.355, 1);
+  pointer-events: none;
 }
 
-.user-pin.locked img {
-  filter: blur(5px) brightness(0.6);
-  opacity: 0.8;
+@keyframes marker-pulse-ring {
+  0% { transform: scale(0.9); opacity: 1; }
+  100% { transform: scale(1.45); opacity: 0; }
 }
 
-.lock-icon-overlay {
+/* Radar Sweeping Beam Overlay */
+.radar-sweep-beam {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
-  color: white;
-  z-index: 2;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
-}
-
-.locked-count {
-  color: #a1a1aa;
-  font-weight: 500;
-  font-size: 13px;
-  margin-left: 2px;
-}
-
-/* Bottom User Card */
-.bottom-user-section {
-  padding: 0 20px 20px; /* Leave space below if needed, though map-page-container has bottom padding */
-  display: flex;
-  flex-direction: column;
+  width: 260%;
+  height: 260%;
+  transform-origin: center center;
+  background: conic-gradient(from 0deg, rgba(162, 28, 175, 0.08) 0deg, rgba(162, 28, 175, 0) 100deg, transparent 360deg);
+  animation: radar-sweep 5s linear infinite;
+  pointer-events: none;
   z-index: 10;
+  margin-top: -130%;
+  margin-left: -130%;
 }
 
-.nearby-user-card {
+@keyframes radar-sweep {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Bottom Swipeable User Carousel */
+.bottom-carousel-container {
   display: flex;
-  align-items: center;
-  gap: 16px;
-  background: #131118;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 12px 16px;
+  gap: 12px;
+  padding: 0 16px 16px; /* Spacing below map is 16px, padding bottom 16px */
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.bottom-carousel-container::-webkit-scrollbar {
+  display: none;
+}
+
+.user-carousel-card {
+  flex-shrink: 0;
+  width: 240px; /* Reduced width so adjacent cards peek out, signaling horizontal swiping */
+  background: rgba(20, 20, 26, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 20px;
-  cursor: pointer;
-  transition: transform 0.2s, background 0.2s;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-}
-
-.nearby-user-card:active {
-  transform: scale(0.98);
-  background: #1a1721;
-}
-
-.card-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: #4a044e;
+  padding: 12px;
   display: flex;
-  justify-content: center;
   align-items: center;
-  overflow: hidden;
+  gap: 12px;
+  scroll-snap-align: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
-.card-avatar img {
+.user-carousel-card.selected {
+  background: rgba(30, 26, 42, 0.85);
+  border-color: #8b5cf6;
+  box-shadow: 0 10px 24px rgba(139, 92, 246, 0.2);
+  transform: translateY(-2px);
+}
+
+.carousel-card-avatar {
+  position: relative;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+}
+
+.carousel-card-avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  mix-blend-mode: luminosity;
-  filter: sepia(1) hue-rotate(250deg) saturate(3) brightness(0.7);
 }
 
-.card-info {
+.carousel-online-indicator {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 10px;
+  height: 10px;
+  background-color: #10b981;
+  border: 2px solid #14141a;
+  border-radius: 50%;
+}
+
+.carousel-card-info {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.card-info h4 {
-  font-size: 16px;
+.carousel-name-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.carousel-name-row h4 {
+  font-size: 15px;
   font-weight: 800;
   color: white;
-  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
 }
 
-.card-info p {
-  font-size: 13px;
-  color: #a1a1aa;
+.carousel-dist-tag {
+  font-size: 11px;
+  color: #a855f7;
+  font-weight: 700;
+  background: rgba(168, 85, 247, 0.12);
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
+.carousel-prof {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.carousel-view-btn {
+  background: linear-gradient(135deg, #ec4899, #8b5cf6);
+  border: none;
+  color: white;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  width: fit-content;
+}
+
+.carousel-view-btn:active {
+  opacity: 0.8;
+}
+
+.carousel-empty-state {
+  width: 100%;
+  padding: 24px;
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: 14px;
+}
+
+/* Nearby List View Styles */
+.nearby-list-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 16px 20px; /* Adjusted padding-bottom to 20px since container height is already fixed above bottom nav */
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.nearby-list-container::-webkit-scrollbar {
+  display: none;
+}
+
+.list-user-item-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(22, 22, 30, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: transform 0.15s, background-color 0.2s;
+}
+
+.list-user-item-card:active {
+  transform: scale(0.98);
+  background: rgba(30, 26, 42, 0.6);
+}
+
+.list-avatar-wrapper {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1.5px solid rgba(255, 255, 255, 0.06);
+}
+
+.list-avatar-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.list-online-dot {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 10px;
+  height: 10px;
+  background-color: #10b981;
+  border: 2px solid #16161e;
+  border-radius: 50%;
+}
+
+.list-user-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.list-user-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.list-user-header h4 {
+  font-size: 15px;
+  font-weight: 800;
+  color: white;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+.list-dist-text {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.list-user-profession {
+  font-size: 12px;
+  color: var(--text-tertiary);
   font-weight: 500;
 }
+
+.list-user-actions {
+  display: flex;
+  align-items: center;
+}
+
+.list-btn {
+  border: none;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.list-btn:active {
+  transform: scale(0.95);
+}
+
+.list-btn.msg {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+
+.list-btn.pending {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+}
+
+.list-btn.accept {
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  color: white;
+}
+
+.list-btn-double {
+  display: flex;
+  gap: 6px;
+}
+
+.list-btn.wave {
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 8px;
+}
+
+.list-btn.connect {
+  background: linear-gradient(135deg, #ec4899, #8b5cf6);
+  color: white;
+  padding: 8px;
+}
+
+.list-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  gap: 12px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.list-empty-state p {
+  font-size: 14px;
+  font-weight: 500;
+}
+

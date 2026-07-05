@@ -1,11 +1,30 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Flame, Bell, Search, Map, ArrowRight, RotateCw, X, SlidersHorizontal, UserPlus, MessageSquare, Check } from 'lucide-react';
+import { Flame, Bell, Search, Map, ArrowRight, RotateCw, X, SlidersHorizontal, UserPlus, MessageSquare, Check, Zap, Crown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import ProfilePreviewModal from '../components/ProfilePreviewModal';
 import PremiumModal from '../components/PremiumModal';
 import { getThumbnailUrl } from '../utils/cloudinary';
 import './Home.css';
+
+const isUserPremium = (user) => {
+  if (!user) return false;
+  if (!user.isPremium) return false;
+  if (!user.premiumExpiresAt) return false;
+  return new Date(user.premiumExpiresAt).getTime() > Date.now();
+};
+
+const VerifiedBadge = () => (
+  <svg 
+    viewBox="0 0 24 24" 
+    width="15" 
+    height="15" 
+    className="premium-verified-badge" 
+    style={{ color: '#3b82f6', fill: 'currentColor', marginLeft: '5px', verticalAlign: 'middle', display: 'inline-block', flexShrink: 0 }}
+  >
+    <path d="M23 12l-2.44-2.79.34-3.69-3.61-.82-1.89-3.2L12 2.96 8.6 1.5 6.71 4.7 3.1 5.52l.34 3.7L1 12l2.44 2.79-.34 3.69 3.61.82 1.89 3.2L12 21.04l3.4 1.46 1.89-3.2 3.61-.82-.34-3.69L23 12zm-13 5l-4-4 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+  </svg>
+);
 
 // Interest emojis mapping for styling actual user interests
 const INTEREST_EMOJIS = {
@@ -40,7 +59,9 @@ const Home = () => {
     skippedUsers,
     markAsSkipped,
     sendRequest,
-    acceptRequest
+    acceptRequest,
+    rejectRequest,
+    sendNotification
   } = useAppContext();
   
   const [searchQuery, setSearchQuery] = useState('');
@@ -55,6 +76,10 @@ const Home = () => {
   const [filterAgeMax, setFilterAgeMax] = useState(35);
   const [filterCollege, setFilterCollege] = useState('all');
   const [filterInterests, setFilterInterests] = useState([]);
+
+  // Upgraded States
+  const [isAlertsDrawerOpen, setIsAlertsDrawerOpen] = useState(false);
+  const [wavedUsers, setWavedUsers] = useState([]);
 
   // Time-of-day Greeting helper
   const getGreeting = () => {
@@ -108,6 +133,27 @@ const Home = () => {
     }
   };
 
+  // direct wave hello trigger
+  const handleWaveDirect = async (e, user) => {
+    e.stopPropagation();
+    if (!currentUser || wavedUsers.includes(user.id)) return;
+
+    try {
+      // 1. Send native push notification
+      sendNotification(
+        user.id, 
+        'wave', 
+        'waved at you 👋', 
+        currentUser.id, 
+        { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar }
+      );
+      // 2. Add to session waved list
+      setWavedUsers(prev => [...prev, user.id]);
+    } catch(err) {
+      console.error("Direct wave hello failed:", err);
+    }
+  };
+
   // Hyper-Dynamic Recommendation Algorithm (Tinder-like matches)
   const suggestions = useMemo(() => {
     if (!currentUser) return [];
@@ -128,25 +174,36 @@ const Home = () => {
       .map(u => {
         let score = 0;
         
-        // 🔥 PRIORITY 1: New users (Extreme boost for first 72h)
+        // 🔥 New users boost (first 72h)
         const joinDate = u.createdAt?.toMillis ? u.createdAt.toMillis() : 0;
         if (joinDate > Date.now() - 72 * 60 * 60 * 1000) score += 500;
         
-        // ⚡ PRIORITY 2: Active users (Online or active recently)
+        // ⚡ Profile Boost placement (absolute priority at the top)
+        const isBoosted = u.boostUntil && u.boostUntil > Date.now();
+        if (isBoosted) score += 5000;
+
+        // 👑 Premium priority ranking (priority appearance in suggestions)
+        const isPremium = u.isPremium && u.premiumExpiresAt && new Date(u.premiumExpiresAt).getTime() > Date.now();
+        if (isPremium) {
+          if (u.premiumPlan === 'monthly') score += 1000;
+          else if (u.premiumPlan === 'yearly') score += 2000;
+        }
+
+        // ⚡ Active users boost (online recently)
         const activeTime = u.lastActive?.toMillis ? u.lastActive.toMillis() : 0;
         if (Date.now() - activeTime < 10 * 60 * 1000) score += 300; 
         
-        // 📍 PRIORITY 3: Proximity (Hyper-local boost)
+        // 📍 Proximity boost (hyper-local)
         if (u.distance === "Very Close") score += 200;
         if (u.distance.includes('m')) score += 150;
         if (parseFloat(u.distance) < 2) score += 100;
         
-        // 🔄 ANTI-STALENESS: Heavy penalty for already seen in this session
+        // 🔄 Anti-staleness penalty
         if (sessionViews.has(u.id)) {
           score -= 1000;
         }
         
-        // 🎲 FRESHNESS JITTER: High randomization for "Fresh on Refresh" feeling
+        // 🎲 Freshness jitter
         score += Math.random() * 250;
         
         return { ...u, _score: score };
@@ -157,11 +214,11 @@ const Home = () => {
   // Search filter logic
   const displayUsers = useMemo(() => {
     if (!searchQuery.trim()) return suggestions;
-    const query = searchQuery.toLowerCase();
+    const queryStr = searchQuery.toLowerCase();
     return suggestions.filter(u => 
-      u.name.toLowerCase().includes(query) || 
-      (u.profession && u.profession.toLowerCase().includes(query)) ||
-      (u.college && u.college.toLowerCase().includes(query))
+      u.name.toLowerCase().includes(queryStr) || 
+      (u.profession && u.profession.toLowerCase().includes(queryStr)) ||
+      (u.college && u.college.toLowerCase().includes(queryStr))
     );
   }, [suggestions, searchQuery]);
 
@@ -238,7 +295,9 @@ const Home = () => {
           </div>
           <h2>Nearby</h2>
         </div>
-        <button className="icon-btn-transparent" onClick={() => navigate('/notifications')} style={{ position: 'relative' }}>
+        
+        {/* Upgraded Bell click -> Opens Quick Alerts Drawer */}
+        <button className="icon-btn-transparent" onClick={() => setIsAlertsDrawerOpen(true)} style={{ position: 'relative' }}>
           <Bell size={24} strokeWidth={1.8} />
           {totalAlerts > 0 && (
             <span className="unread-badge-premium">
@@ -254,6 +313,14 @@ const Home = () => {
           <span className="hey-text-mockup">{getGreeting()} 👋</span>
           <h1 className="discover-text-mockup">{currentUser?.name?.split(' ')[0] || 'User'}</h1>
         </div>
+
+        {/* Profile Boost Banner */}
+        {currentUser?.boostUntil && currentUser.boostUntil > Date.now() && (
+          <div className="active-boost-banner animate-pulse" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'linear-gradient(135deg, #fbbf24 0%, #ef4444 100%)', color: 'white', padding: '10px 16px', borderRadius: '16px', fontSize: '13px', fontWeight: '800', margin: '0 16px 16px 16px', boxShadow: '0 4px 15px rgba(239, 68, 68, 0.3)', justifyContent: 'center' }}>
+            <Zap size={16} fill="white" />
+            <span>⚡ Profile Boost Active: {Math.max(0, Math.ceil((currentUser.boostUntil - Date.now()) / 60000))}m remaining!</span>
+          </div>
+        )}
 
         {/* Search Bar with Settings icon */}
         <div className="search-bar-new">
@@ -422,12 +489,16 @@ const Home = () => {
               
               return (
                 <div key={user.id} className="suggestion-card-wrapper">
-                  <div className="large-suggested-card" onClick={() => {
+                  <div className={`large-suggested-card ${isUserPremium(user) && (user.premiumPlan === 'yearly' || !user.premiumPlan) ? 'yearly-card-gold-glow' : ''}`} onClick={() => {
                     markAsViewed(user.id);
                     handleUserClick(user);
                   }}>
                     {/* Render actual profile photo directly from DB */}
-                    <img src={user.avatar ? getThumbnailUrl(user.avatar, 400) : '/default-avatar.png'} alt={user.name} />
+                    <img 
+                      src={user.avatar ? getThumbnailUrl(user.avatar, 400) : '/default-avatar.png'} 
+                      alt={user.name} 
+                      className={isUserPremium(user) && (user.premiumPlan === 'yearly' || !user.premiumPlan) ? 'card-img-yearly-gold' : ''} 
+                    />
                     
                     {/* Tiny Status Badge at the top-left */}
                     <div className="card-top-status-badge">
@@ -444,7 +515,16 @@ const Home = () => {
                     {/* Rich Card Info Overlay */}
                     <div className="card-overlay">
                       {/* Name & Age directly from DB */}
-                      <h4>{user.name}{user.age ? `, ${user.age}` : ''}</h4>
+                      <h4>
+                        {user.name}
+                        {isUserPremium(user) && <VerifiedBadge />}
+                        {isUserPremium(user) && (user.premiumPlan === 'yearly' || !user.premiumPlan) && (
+                          <span className="yearly-supporter-badge" style={{ color: '#fbbf24', marginLeft: '5px', verticalAlign: 'middle', display: 'inline-flex', alignItems: 'center' }} title="Yearly Supporter">
+                            <Crown size={12} fill="#fbbf24" />
+                          </span>
+                        )}
+                        {user.age ? `, ${user.age}` : ''}
+                      </h4>
                       
                       {/* Proximity Location with Pin Icon */}
                       {user.distance && (
@@ -478,11 +558,20 @@ const Home = () => {
                         </div>
                       )}
 
-                      {/* Premium Connect / Chat Button on the card (height 48-52px) */}
+                      {/* Split Actions Connect + Wave buttons row */}
                       {status === 'none' && (
-                        <button className="card-connect-btn connect" onClick={(e) => handleConnectDirect(e, user)}>
-                          Connect
-                        </button>
+                        <div className="card-actions-row" onClick={e => e.stopPropagation()}>
+                          <button className="card-connect-btn connect flex-1" onClick={(e) => handleConnectDirect(e, user)}>
+                            Connect
+                          </button>
+                          <button 
+                            className={`card-wave-icon-btn ${wavedUsers.includes(user.id) ? 'waved' : ''}`} 
+                            onClick={(e) => handleWaveDirect(e, user)}
+                            disabled={wavedUsers.includes(user.id)}
+                          >
+                            {wavedUsers.includes(user.id) ? <Check size={16} strokeWidth={3} /> : '👋'}
+                          </button>
+                        </div>
                       )}
                       {status === 'sent' && (
                         <button className="card-connect-btn sent" disabled>
@@ -521,6 +610,83 @@ const Home = () => {
           </div>
         </div>
       </div>
+
+      {/* Quick Alerts Sliding Drawer bottom overlay */}
+      {isAlertsDrawerOpen && (
+        <div className="alerts-drawer-overlay animate-fade-in" onClick={() => setIsAlertsDrawerOpen(false)}>
+          <div className="alerts-drawer-sheet animate-slide-up" onClick={e => e.stopPropagation()}>
+            <div className="alerts-drawer-header">
+              <h3>Quick Alerts</h3>
+              <button className="close-drawer-btn" onClick={() => setIsAlertsDrawerOpen(false)}>
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="alerts-drawer-body">
+              {/* Requests Area */}
+              {requests.length > 0 ? (
+                <div className="alerts-drawer-section">
+                  <h4>Circle Invites ({requests.length})</h4>
+                  <div className="requests-drawer-list">
+                    {requests.map(req => {
+                      const user = nearbyUsers.find(u => u.id === req.fromId) || req.fromUser || { name: 'User', avatar: '/avatars/neutral.png' };
+                      return (
+                        <div key={req.id} className="drawer-request-item">
+                          <img src={getThumbnailUrl(user.avatar, 80)} alt={user.name} className="drawer-item-avatar" />
+                          <div className="drawer-item-info">
+                            <h5>{user.name}{isUserPremium(user) && <VerifiedBadge />}</h5>
+                            <p>{user.profession || 'Student'}</p>
+                          </div>
+                          <div className="drawer-item-actions">
+                            <button className="drawer-action-btn accept" onClick={() => acceptRequest(req.id)}>
+                              Accept
+                            </button>
+                            <button className="drawer-action-btn decline" onClick={() => rejectRequest(req.id)}>
+                              Decline
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div className="alerts-drawer-section empty">
+                  <p className="no-requests-text">No pending requests.</p>
+                </div>
+              )}
+
+              {/* Recent Activity notifications area */}
+              <div className="alerts-drawer-section">
+                <h4>Recent Activity</h4>
+                {notifications.length === 0 ? (
+                  <p className="no-alerts-placeholder">No recent activity alerts.</p>
+                ) : (
+                  <div className="notifications-drawer-list">
+                    {notifications.slice(0, 5).map(notif => {
+                      const user = nearbyUsers.find(u => u.id === notif.fromId) || notif.fromUser || { name: 'User', avatar: '/avatars/neutral.png' };
+                      return (
+                        <div key={notif.id} className={`drawer-notif-item ${notif.read ? 'read' : 'unread'}`}>
+                          <img src={getThumbnailUrl(user.avatar, 80)} alt={user.name} className="drawer-item-avatar" />
+                          <div className="drawer-item-info">
+                            <p className="notif-text">
+                              <strong>{user.name}</strong> {notif.text || 'waved at you!'}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <button className="view-all-alerts-btn" onClick={() => { setIsAlertsDrawerOpen(false); navigate('/notifications'); }}>
+              View All Alerts
+            </button>
+          </div>
+        </div>
+      )}
 
       <ProfilePreviewModal
         user={selectedUser}

@@ -180,9 +180,14 @@ export const AppProvider = ({ children }) => {
         };
       });
 
-      // Filter out current user and sort by distance
+      // Filter out current user, sort by distance, and exclude users in Ghost Mode (only if their premium is active)
       realUsers = realUsers
-        .filter(u => u.id !== currentUser.id)
+        .filter(u => {
+          if (u.id === currentUser.id) return false;
+          const uIsPremium = u.isPremium && u.premiumExpiresAt && new Date(u.premiumExpiresAt).getTime() > Date.now();
+          if (u.ghostMode && uIsPremium) return false;
+          return true;
+        })
         .sort((a, b) => a.rawDistance - b.rawDistance);
 
       setNearbyUsers(realUsers);
@@ -380,20 +385,18 @@ export const AppProvider = ({ children }) => {
       return;
     }
 
-    const isPremium = currentUser.isPremium || (currentUser.premiumUntil && currentUser.premiumUntil > Date.now());
+    const isPremium = currentUser?.isPremium && currentUser?.premiumExpiresAt && new Date(currentUser.premiumExpiresAt).getTime() > Date.now();
     let recentRequests = currentUser.requestHistory || [];
     
-    /* 
     if (!isPremium) {
       const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
       recentRequests = recentRequests.filter(timestamp => timestamp > twentyFourHoursAgo);
 
       if (recentRequests.length >= 10) {
-        alert("You've reached your daily limit of 10 requests. Upgrade to Pro for unlimited requests!");
-        return;
+        alert("🔒 Daily Limit Reached! You've sent 10 connection requests in the last 24 hours. Upgrade to Premium for unlimited likes and chat requests!");
+        return false;
       }
     }
-    */
 
     try {
       const batch = writeBatch(db);

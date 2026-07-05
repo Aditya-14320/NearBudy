@@ -166,3 +166,117 @@
   flex-shrink: 0;
   box-shadow: 0 2px 8px rgba(168, 85, 247, 0.4);
 }
+
+/* Search Inbox Bar styles */
+.search-inbox-wrapper {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 0 12px;
+  height: 40px;
+  gap: 10px;
+  margin-top: 14px;
+  transition: all 0.2s;
+}
+
+.search-inbox-wrapper:focus-within {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.15);
+}
+
+.search-inbox-icon {
+  color: #71717a;
+  flex-shrink: 0;
+}
+
+.search-inbox-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 14px;
+  outline: none;
+}
+
+.search-inbox-input::placeholder {
+  color: #71717a;
+}
+
+/* Stories / Active Now Section */
+.active-stories-section {
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.active-stories-section h3 {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-left: 4px;
+}
+
+.active-stories-row {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+
+.active-stories-row::-webkit-scrollbar {
+  display: none;
+}
+
+.story-bubble {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.story-avatar-wrapper {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  padding: 2px;
+  background: linear-gradient(135deg, #10b981, #059669); /* Glowing green outline */
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);
+}
+
+.story-avatar-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid #0a0a0c; /* Gap inside outline */
+}
+
+.story-online-dot {
+  position: absolute;
+  bottom: 0px;
+  right: 0px;
+  width: 11px;
+  height: 11px;
+  background: #10b981;
+  border: 2px solid #0a0a0c;
+  border-radius: 50%;
+}
+
+.story-bubble span {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  max-width: 54px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

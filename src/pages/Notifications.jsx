@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Check, X, ArrowLeft, Eye, Hand, MapPin, Bell } from 'lucide-react';
+import { Check, X, ArrowLeft, Eye, Hand, MapPin, Bell, Crown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import PremiumModal from '../components/PremiumModal';
 import ProfilePreviewModal from '../components/ProfilePreviewModal';
@@ -50,12 +50,10 @@ const Notifications = () => {
 
 
     
-    /*
     if (!isPremium) {
       setIsPremiumModalOpen(true);
       return;
     }
-    */
 
     if (notif.fromUser?.id) {
       const fullUser = nearbyUsers.find(u => u.id === notif.fromUser.id);
@@ -92,6 +90,13 @@ const Notifications = () => {
             <div className="empty-requests">
               <p>No pending requests.</p>
             </div>
+          ) : !isPremium ? (
+            <div className="premium-locked-requests-overlay" onClick={() => setIsPremiumModalOpen(true)} style={{ textAlign: 'center', padding: '40px 20px', background: 'rgba(255, 255, 255, 0.01)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '24px', cursor: 'pointer', margin: '20px' }}>
+              <Crown size={38} style={{ color: '#fbbf24', marginBottom: '16px', filter: 'drop-shadow(0 0 8px rgba(251,191,36,0.3))' }} />
+              <h3 style={{ fontSize: '18px', fontWeight: '800', marginBottom: '8px', color: 'white' }}>See Who Sent Invites</h3>
+              <p style={{ fontSize: '12.5px', color: '#a1a1aa', lineHeight: '1.4', margin: '0 0 20px 0' }}>Upgrade to Premium to view and accept incoming connection requests.</p>
+              <button className="unlock-pro-btn" style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', border: 'none', color: 'white', fontWeight: '800', fontSize: '13px', padding: '10px 24px', borderRadius: '12px', cursor: 'pointer', boxShadow: '0 4px 15px rgba(59,130,246,0.3)' }}>Unlock Premium</button>
+            </div>
           ) : (
             requests.map(req => (
               <div key={req.id} className="request-card animate-slide-up">
@@ -122,7 +127,7 @@ const Notifications = () => {
             notifications.map(notif => {
 
               const isIdentityAlert = notif.type === 'view' || notif.type === 'wave';
-              const canSeeIdentity = notif.fromUser; // Unlocked for Play Store release
+              const canSeeIdentity = isPremium && notif.fromUser;
 
               return (
                 <div 
