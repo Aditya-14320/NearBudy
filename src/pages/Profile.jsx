@@ -31,7 +31,7 @@ const VerifiedBadge = () => (
 );
 
 const Profile = () => {
-  const { currentUser, chats, requests, notifications } = useAppContext();
+  const { currentUser, setCurrentUser, chats, requests, notifications } = useAppContext();
   const navigate = useNavigate();
   
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -262,18 +262,23 @@ const Profile = () => {
               )}
 
               {/* Interests tag cloud */}
-              {currentUser.interests && currentUser.interests.length > 0 && (
-                <div className="profile-info-card">
-                  <h4>Interests</h4>
-                  <div className="interests-grid-cloud">
-                    {currentUser.interests.map(interest => (
-                      <span key={interest} className="interest-pill-cloud">
-                        {interest}
-                      </span>
-                    ))}
+              {currentUser.interests && currentUser.interests.length > 0 && (() => {
+                const interestArr = Array.isArray(currentUser.interests)
+                  ? currentUser.interests
+                  : currentUser.interests.split(',').map(i => i.trim()).filter(Boolean);
+                return interestArr.length > 0 ? (
+                  <div className="profile-info-card">
+                    <h4>Interests</h4>
+                    <div className="interests-grid-cloud">
+                      {interestArr.map(interest => (
+                        <span key={interest} className="interest-pill-cloud">
+                          {interest}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                ) : null;
+              })()}
 
               {/* Demographics Information details */}
               <div className="profile-info-card details-card">

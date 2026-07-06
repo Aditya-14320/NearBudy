@@ -73,7 +73,7 @@ const Home = () => {
   // Search Filter States
   const [filterDistance, setFilterDistance] = useState('all');
   const [filterAgeMin, setFilterAgeMin] = useState(18);
-  const [filterAgeMax, setFilterAgeMax] = useState(35);
+  const [filterAgeMax, setFilterAgeMax] = useState(60);
   const [filterCollege, setFilterCollege] = useState('all');
   const [filterInterests, setFilterInterests] = useState([]);
 
@@ -229,7 +229,11 @@ const Home = () => {
   }, [nearbyUsers]);
 
   const uniqueInterests = useMemo(() => {
-    const interests = nearbyUsers.flatMap(u => u.interests || []);
+    const interests = nearbyUsers.flatMap(u => {
+      if (!u.interests) return [];
+      if (Array.isArray(u.interests)) return u.interests;
+      return u.interests.split(',').map(i => i.trim()).filter(Boolean);
+    });
     return [...new Set(interests)];
   }, [nearbyUsers]);
 
@@ -543,20 +547,25 @@ const Home = () => {
                       )}
 
                       {/* Emojified inline interest tags from DB */}
-                      {user.interests && user.interests.length > 0 && (
-                        <div className="card-interests-inline">
-                          {user.interests.slice(0, 3).map((interest, idx) => {
-                            const lower = interest.toLowerCase();
-                            const emoji = INTEREST_EMOJIS[lower] || '';
-                            return (
-                              <span key={idx} className="interest-span-item">
-                                {idx > 0 && <span className="interest-dot-separator">  </span>}
-                                {emoji}{interest}
-                              </span>
-                            );
-                          })}
-                        </div>
-                      )}
+                      {user.interests && user.interests.length > 0 && (() => {
+                        const interestArr = Array.isArray(user.interests)
+                          ? user.interests
+                          : user.interests.split(',').map(i => i.trim()).filter(Boolean);
+                        return interestArr.length > 0 ? (
+                          <div className="card-interests-inline">
+                            {interestArr.slice(0, 3).map((interest, idx) => {
+                              const lower = interest.toLowerCase();
+                              const emoji = INTEREST_EMOJIS[lower] || '';
+                              return (
+                                <span key={idx} className="interest-span-item">
+                                  {idx > 0 && <span className="interest-dot-separator">  </span>}
+                                  {emoji}{interest}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        ) : null;
+                      })()}
 
                       {/* Split Actions Connect + Wave buttons row */}
                       {status === 'none' && (
@@ -670,7 +679,7 @@ const Home = () => {
                           <img src={getThumbnailUrl(user.avatar, 80)} alt={user.name} className="drawer-item-avatar" />
                           <div className="drawer-item-info">
                             <p className="notif-text">
-                              <strong>{user.name}</strong> {notif.text || 'waved at you!'}
+                              <strong>{user.name}</strong> {notif.message || notif.text || 'waved at you!'}
                             </p>
                           </div>
                         </div>

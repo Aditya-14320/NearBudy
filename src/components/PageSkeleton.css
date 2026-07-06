@@ -1,0 +1,30 @@
+.page-skeleton {
+  width: 100%;
+  height: 100dvh;
+  background: #0a0a0c;
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow: hidden;
+}
+.skeleton-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.skeleton-block {
+  background: linear-gradient(90deg, #16161a 25%, #202026 50%, #16161a 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 12px;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.skeleton-title { width: 140px; height: 28px; }
+.skeleton-icon { width: 36px; height: 36px; border-radius: 50%; }
+.skeleton-body { display: flex; flex-direction: column; gap: 16px; flex: 1; }
+.skeleton-card { width: 100%; height: 120px; border-radius: 20px; }
+.skeleton-card.short { height: 80px; }

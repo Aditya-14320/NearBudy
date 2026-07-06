@@ -1,50 +1,47 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import SplashScreen from './pages/SplashScreen';
-import Welcome from './pages/Welcome';
-import ProfileSetup from './pages/ProfileSetup';
-import Home from './pages/Home';
-import MapPage from './pages/MapPage';
-import Profile from './pages/Profile';
-import Notifications from './pages/Notifications';
-import Connections from './pages/Connections';
-import ChatScreen from './pages/ChatScreen';
-import ChatsPage from './pages/ChatsPage';
-import PrivacyPolicy from './pages/Policy';
-import Terms from './pages/Terms';
+import PageSkeleton from './components/PageSkeleton';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
+
+// Lazy-load all pages for code splitting
+const SplashScreen  = lazy(() => import('./pages/SplashScreen'));
+const Welcome       = lazy(() => import('./pages/Welcome'));
+const ProfileSetup  = lazy(() => import('./pages/ProfileSetup'));
+const Home          = lazy(() => import('./pages/Home'));
+const MapPage       = lazy(() => import('./pages/MapPage'));
+const Profile       = lazy(() => import('./pages/Profile'));
+const Notifications = lazy(() => import('./pages/Notifications'));
+const Connections   = lazy(() => import('./pages/Connections'));
+const ChatScreen    = lazy(() => import('./pages/ChatScreen'));
+const ChatsPage     = lazy(() => import('./pages/ChatsPage'));
+const PrivacyPolicy = lazy(() => import('./pages/Policy'));
+const Terms         = lazy(() => import('./pages/Terms'));
 
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<SplashScreen />} />
-        <Route path="/welcome" element={<Welcome />} />
-        <Route path="/privacy" element={<PrivacyPolicy />} />
-        <Route path="/terms" element={<Terms />} />
-
-        {/* Protected Profile Setup (requires auth check) */}
-        <Route path="/profile-setup" element={<ProtectedRoute allowOnboarding><ProfileSetup /></ProtectedRoute>} />
-        
-        {/* Protected Chat Screen (requires auth check but no global bottom navigation) */}
-        <Route path="/chat/:id" element={<ProtectedRoute><ChatScreen /></ProtectedRoute>} />
-
-        
-        {/* Protected/Main App Routes wrapped in Layout */}
-        <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-          <Route path="/home" element={<Home />} />
-          <Route path="/map" element={<MapPage />} />
-          <Route path="/chats" element={<ChatsPage />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/notifications" element={<Notifications />} />
-          <Route path="/connections" element={<Connections />} />
-        </Route>
-
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <Suspense fallback={<PageSkeleton />}>
+        <Routes>
+          <Route path="/" element={<SplashScreen />} />
+          <Route path="/welcome" element={<Welcome />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/profile-setup" element={<ProtectedRoute allowOnboarding><ProfileSetup /></ProtectedRoute>} />
+          <Route path="/chat/:id" element={<ProtectedRoute><ChatScreen /></ProtectedRoute>} />
+          <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+            <Route path="/home" element={<Home />} />
+            <Route path="/map" element={<MapPage />} />
+            <Route path="/chats" element={<ChatsPage />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/notifications" element={<Notifications />} />
+            <Route path="/connections" element={<Connections />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }
 
 export default App;
-

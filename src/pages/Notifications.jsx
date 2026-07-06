@@ -16,7 +16,7 @@ const Notifications = () => {
   
   const isPremium = useMemo(() => {
     // eslint-disable-next-line react-hooks/purity
-    return currentUser?.isPremium || (currentUser?.premiumUntil && currentUser?.premiumUntil > Date.now());
+    return currentUser?.isPremium && currentUser?.premiumExpiresAt && new Date(currentUser.premiumExpiresAt).getTime() > Date.now();
   }, [currentUser]);
 
   useEffect(() => {
@@ -68,7 +68,7 @@ const Notifications = () => {
   return (
     <div className="notifications-page animate-fade-in">
       <div className="top-header">
-        <button className="icon-btn" onClick={() => navigate('/home')}>
+        <button className="icon-btn" onClick={() => navigate(-1)}>
           <ArrowLeft size={24} />
         </button>
         <h2>Activity</h2>

@@ -229,7 +229,7 @@ const PremiumModal = ({
               <p className="paywall-terms-line">
                 By subscribing, you agree to our{' '}
                 <a href="/terms" target="_blank" rel="noreferrer">Terms</a>{' &amp; '}
-                <a href="/policy" target="_blank" rel="noreferrer">Privacy Policy</a>.
+                <a href="/privacy" target="_blank" rel="noreferrer">Privacy Policy</a>.
                 Cancel anytime.
               </p>
             </div>

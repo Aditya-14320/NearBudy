@@ -130,9 +130,13 @@ export default defineConfig(({ mode }) => {
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
+            if (id.includes('react-dom') || id.includes('react-router')) return 'vendor-react';
             if (id.includes('react')) return 'vendor-react';
             if (id.includes('firebase')) return 'vendor-firebase';
-            if (id.includes('lucide-react') || id.includes('leaflet')) return 'vendor-ui';
+            if (id.includes('leaflet') || id.includes('react-leaflet')) return 'vendor-map';
+            if (id.includes('lucide-react')) return 'vendor-icons';
+            if (id.includes('@capacitor')) return 'vendor-capacitor';
+            if (id.includes('@aws-sdk')) return 'vendor-aws';
             return 'vendor';
           }
         }

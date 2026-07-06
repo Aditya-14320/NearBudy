@@ -50,9 +50,8 @@ export const uploadToCloudinary = async (fileOrBase64) => {
  */
 export const getThumbnailUrl = (url, size = 200) => {
   if (!url || !url.includes('cloudinary.com')) return url;
-  
-  // Format: .../upload/v1234567/public_id.jpg
-  // Insert: .../upload/c_fill,g_face,w_200,h_200,q_auto,f_auto/v1234567/public_id.jpg
+  // Guard: if already transformed, don't double-transform
+  if (url.includes('/upload/c_fill') || url.includes('/upload/w_')) return url;
   return url.replace('/upload/', `/upload/c_fill,g_face,w_${size},h_${size},q_auto,f_auto/`);
 };
 
@@ -61,6 +60,8 @@ export const getThumbnailUrl = (url, size = 200) => {
  */
 export const getOptimizedProfileUrl = (url) => {
   if (!url || !url.includes('cloudinary.com')) return url;
+  // Guard: if already transformed, don't double-transform
+  if (url.includes('/upload/w_')) return url;
   return url.replace('/upload/', '/upload/w_800,q_auto,f_auto/');
 };
 

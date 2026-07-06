@@ -7,7 +7,7 @@ const Layout = () => {
   const { currentUser } = useAppContext();
 
   if (!currentUser) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/welcome" replace />;
   }
 
   return (

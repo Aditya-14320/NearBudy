@@ -62,7 +62,7 @@ const SettingsModal = ({ isOpen, onClose }) => {
   };
 
   const handlePaymentSuccess = (newExpiry) => {
-    setCurrentUser(prev => ({ ...prev, isPremium: true, premiumUntil: newExpiry }));
+    setCurrentUser(prev => ({ ...prev, isPremium: true, premiumExpiresAt: newExpiry }));
   };
 
   return (
