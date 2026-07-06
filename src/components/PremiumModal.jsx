@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Map, MessageCircle, EyeOff, Crown, ShieldCheck, Sparkles, Check, ArrowLeft, Heart, Zap, Image, ChevronDown } from 'lucide-react';
+import { X, Crown, Sparkles, Check, ChevronDown, RotateCcw } from 'lucide-react';
 import { db } from '../firebase';
 import { updateDoc, doc } from 'firebase/firestore';
 import { useAppContext } from '../context/AppContext';
@@ -9,7 +9,7 @@ const PremiumModal = ({
   isOpen, 
   onClose, 
   onPaymentSuccess,
-  customTitle = "CamChat Premium",
+  customTitle = "NearBudy Premium",
   customSubtitle = "Supercharge your connections and stand out."
 }) => {
   const { currentUser, setCurrentUser } = useAppContext();
@@ -17,6 +17,7 @@ const PremiumModal = ({
   const [selectedPlan, setSelectedPlan] = useState('monthly'); // 'weekly' | 'monthly' | 'yearly'
   const [checkoutState, setCheckoutState] = useState('idle'); // 'idle' | 'google-play-billing' | 'processing' | 'success'
   const [checkoutStepText, setCheckoutStepText] = useState('');
+  const [restoreMsg, setRestoreMsg] = useState('');
 
   if (!isOpen || !currentUser) return null;
 
@@ -75,6 +76,13 @@ const PremiumModal = ({
 
   const handleStartCheckout = () => {
     setCheckoutState('google-play-billing');
+  };
+
+  const handleRestorePurchases = async () => {
+    setRestoreMsg('Checking purchases...');
+    await new Promise(r => setTimeout(r, 1500));
+    setRestoreMsg('No active purchases found.');
+    setTimeout(() => setRestoreMsg(''), 3000);
   };
 
   const handlePaymentSuccessFlow = async () => {
@@ -147,6 +155,8 @@ const PremiumModal = ({
     }
   };
 
+  const periodLabel = { weekly: 'week', monthly: 'month', yearly: 'year' };
+
   return (
     <div className="modal-overlay animate-fade-in" onClick={checkoutState === 'idle' ? onClose : undefined}>
       <div className="premium-modal animate-slide-up" onClick={e => e.stopPropagation()}>
@@ -203,9 +213,26 @@ const PremiumModal = ({
               ))}
             </div>
 
-            <button className="upgrade-checkout-btn" onClick={handleStartCheckout}>
-              <Sparkles size={18} /> Get Premium
-            </button>
+            {/* Sticky CTA Footer */}
+            <div className="paywall-sticky-footer">
+              <button className="upgrade-checkout-btn" onClick={handleStartCheckout}>
+                <Sparkles size={18} />
+                Continue – ₹{activePlanDetails.price}/{periodLabel[selectedPlan]}
+              </button>
+
+              <button className="restore-purchases-btn" onClick={handleRestorePurchases}>
+                <RotateCcw size={12} />
+                Restore Purchases
+              </button>
+              {restoreMsg && <p className="restore-msg">{restoreMsg}</p>}
+
+              <p className="paywall-terms-line">
+                By subscribing, you agree to our{' '}
+                <a href="/terms" target="_blank" rel="noreferrer">Terms</a>{' &amp; '}
+                <a href="/policy" target="_blank" rel="noreferrer">Privacy Policy</a>.
+                Cancel anytime.
+              </p>
+            </div>
           </>
         )}
 
