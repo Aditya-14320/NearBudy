@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Flame, Bell, Search, Map, ArrowRight, RotateCw, X, SlidersHorizontal, UserPlus, MessageSquare, Check, Zap } from 'lucide-react';
+import { Flame, Bell, Search, Map, ArrowRight, RotateCw, X, SlidersHorizontal, UserPlus, MessageSquare, Check, Zap, CheckCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import ProfilePreviewModal from '../components/ProfilePreviewModal';
@@ -45,6 +45,7 @@ const Home = () => {
     acceptRequest,
     rejectRequest,
     sendNotification,
+    markNotificationsRead,
     locationPermission
   } = useAppContext();
   
@@ -62,7 +63,30 @@ const Home = () => {
 
   // Upgraded States
   const [isAlertsDrawerOpen, setIsAlertsDrawerOpen] = useState(false);
+  const [alertTab, setAlertTab] = useState('requests'); // 'requests' | 'activity'
   const [wavedUsers, setWavedUsers] = useState([]);
+
+  // Time ago helper
+  const timeAgo = (ts) => {
+    if (!ts) return '';
+    const date = ts?.toDate ? ts.toDate() : new Date(ts);
+    const diff = Math.floor((Date.now() - date.getTime()) / 1000);
+    if (diff < 60) return 'just now';
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
+  };
+
+  // Notification type config
+  const notifConfig = (type) => {
+    switch (type) {
+      case 'wave':    return { emoji: '👋', label: 'waved at you',   color: '#f59e0b' };
+      case 'view':    return { emoji: '👀', label: 'viewed your profile', color: '#8b5cf6' };
+      case 'connect': return { emoji: '🤝', label: 'connected with you', color: '#10b981' };
+      case 'message': return { emoji: '💬', label: 'sent you a message', color: '#3b82f6' };
+      default:        return { emoji: '🔔', label: 'sent you a notification', color: '#ec4899' };
+    }
+  };
 
   // Time-of-day Greeting helper
   const getGreeting = () => {
@@ -632,76 +656,132 @@ const Home = () => {
 
       {/* Quick Alerts Sliding Drawer bottom overlay */}
       {isAlertsDrawerOpen && (
-        <div className="alerts-drawer-overlay animate-fade-in" onClick={() => setIsAlertsDrawerOpen(false)}>
-          <div className="alerts-drawer-sheet animate-slide-up" onClick={e => e.stopPropagation()}>
-            <div className="alerts-drawer-header">
-              <h3>Quick Alerts</h3>
-              <button className="close-drawer-btn" onClick={() => setIsAlertsDrawerOpen(false)}>
-                <X size={20} />
-              </button>
-            </div>
-            
-            <div className="alerts-drawer-body">
-              {/* Requests Area */}
-              {requests.length > 0 ? (
-                <div className="alerts-drawer-section">
-                  <h4>Circle Invites ({requests.length})</h4>
-                  <div className="requests-drawer-list">
-                    {requests.map(req => {
-                      const user = nearbyUsers.find(u => u.id === req.fromId) || req.fromUser || { name: 'User', avatar: '/avatars/neutral.png' };
-                      return (
-                        <div key={req.id} className="drawer-request-item">
-                          <img src={getThumbnailUrl(user.avatar, 80)} alt={user.name} className="drawer-item-avatar" />
-                          <div className="drawer-item-info">
-                            <h5>{user.name}</h5>
-                            <p>{user.profession || 'Student'}</p>
-                          </div>
-                          <div className="drawer-item-actions">
-                            <button className="drawer-action-btn accept" onClick={() => acceptRequest(req.id)}>
-                              Accept
-                            </button>
-                            <button className="drawer-action-btn decline" onClick={() => rejectRequest(req.id)}>
-                              Decline
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : (
-                <div className="alerts-drawer-section empty">
-                  <p className="no-requests-text">No pending requests.</p>
-                </div>
-              )}
+        <div className="alerts-drawer-overlay" onClick={() => setIsAlertsDrawerOpen(false)}>
+          <div className="alerts-drawer-sheet" onClick={e => e.stopPropagation()}>
 
-              {/* Recent Activity notifications area */}
-              <div className="alerts-drawer-section">
-                <h4>Recent Activity</h4>
-                {notifications.length === 0 ? (
-                  <p className="no-alerts-placeholder">No recent activity alerts.</p>
-                ) : (
-                  <div className="notifications-drawer-list">
-                    {notifications.slice(0, 5).map(notif => {
-                      const user = nearbyUsers.find(u => u.id === notif.fromId) || notif.fromUser || { name: 'User', avatar: '/avatars/neutral.png' };
-                      return (
-                        <div key={notif.id} className={`drawer-notif-item ${notif.read ? 'read' : 'unread'}`}>
-                          <img src={getThumbnailUrl(user.avatar, 80)} alt={user.name} className="drawer-item-avatar" />
-                          <div className="drawer-item-info">
-                            <p className="notif-text">
-                              <strong>{user.name}</strong> {notif.message || notif.text || 'waved at you!'}
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+            {/* Drag handle */}
+            <div className="alerts-drag-handle" />
+
+            {/* Header */}
+            <div className="alerts-drawer-header">
+              <div>
+                <h3>Quick Alerts</h3>
+                <p className="alerts-drawer-subtitle">
+                  {requests.length > 0 ? `${requests.length} pending invite${requests.length > 1 ? 's' : ''}` : 'You\'re all caught up'}
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                {notifications.some(n => !n.read) && (
+                  <button className="mark-read-btn" onClick={markNotificationsRead} title="Mark all read">
+                    <CheckCheck size={16} />
+                  </button>
                 )}
+                <button className="close-drawer-btn" onClick={() => setIsAlertsDrawerOpen(false)}>
+                  <X size={18} />
+                </button>
               </div>
             </div>
 
+            {/* Tab switcher */}
+            <div className="alerts-tab-bar">
+              <button
+                className={`alerts-tab ${alertTab === 'requests' ? 'active' : ''}`}
+                onClick={() => setAlertTab('requests')}
+              >
+                Invites
+                {requests.length > 0 && <span className="alerts-tab-badge">{requests.length}</span>}
+              </button>
+              <button
+                className={`alerts-tab ${alertTab === 'activity' ? 'active' : ''}`}
+                onClick={() => setAlertTab('activity')}
+              >
+                Activity
+                {notifications.filter(n => !n.read).length > 0 && (
+                  <span className="alerts-tab-badge">{notifications.filter(n => !n.read).length}</span>
+                )}
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="alerts-drawer-body">
+
+              {/* ── REQUESTS TAB ── */}
+              {alertTab === 'requests' && (
+                <div className="alerts-drawer-section">
+                  {requests.length > 0 ? (
+                    <div className="requests-drawer-list">
+                      {requests.map(req => {
+                        const user = nearbyUsers.find(u => u.id === req.fromId) || req.fromUser || { name: 'User', avatar: '/avatars/neutral.png' };
+                        return (
+                          <div key={req.id} className="drawer-request-item">
+                            <div className="drawer-avatar-wrap">
+                              <img src={getThumbnailUrl(user.avatar, 80)} alt={user.name} className="drawer-item-avatar" />
+                              <span className="drawer-avatar-emoji">🤝</span>
+                            </div>
+                            <div className="drawer-item-info">
+                              <h5>{user.name}</h5>
+                              <p>{user.profession || 'Nearby'} · {timeAgo(req.createdAt)}</p>
+                            </div>
+                            <div className="drawer-item-actions">
+                              <button className="drawer-action-btn accept" onClick={() => { acceptRequest(req.id); }}>
+                                <Check size={14} /> Accept
+                              </button>
+                              <button className="drawer-action-btn decline" onClick={() => rejectRequest(req.id)}>
+                                <X size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="alerts-empty-state">
+                      <span className="alerts-empty-emoji">🤝</span>
+                      <p>No pending invites</p>
+                      <span>When someone wants to connect, they'll appear here.</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── ACTIVITY TAB ── */}
+              {alertTab === 'activity' && (
+                <div className="alerts-drawer-section">
+                  {notifications.length > 0 ? (
+                    <div className="notifications-drawer-list">
+                      {notifications.slice(0, 10).map(notif => {
+                        const user = nearbyUsers.find(u => u.id === notif.fromId) || notif.fromUser || { name: 'Someone', avatar: '/avatars/neutral.png' };
+                        const cfg = notifConfig(notif.type);
+                        return (
+                          <div key={notif.id} className={`drawer-notif-item ${notif.read ? 'read' : 'unread'}`}>
+                            {!notif.read && <div className="notif-unread-dot" />}
+                            <div className="drawer-avatar-wrap">
+                              <img src={getThumbnailUrl(user.avatar, 80)} alt={user.name} className="drawer-item-avatar" />
+                              <span className="drawer-avatar-emoji" style={{ background: `${cfg.color}22`, color: cfg.color }}>{cfg.emoji}</span>
+                            </div>
+                            <div className="drawer-item-info">
+                              <p className="notif-text">
+                                <strong>{user.name}</strong> {notif.message || cfg.label}
+                              </p>
+                              <span className="notif-time">{timeAgo(notif.createdAt)}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="alerts-empty-state">
+                      <span className="alerts-empty-emoji">🔔</span>
+                      <p>No activity yet</p>
+                      <span>Waves, profile views and connections show up here.</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             <button className="view-all-alerts-btn" onClick={() => { setIsAlertsDrawerOpen(false); navigate('/notifications'); }}>
-              View All Alerts
+              View All Notifications
             </button>
           </div>
         </div>
