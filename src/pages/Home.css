@@ -1322,6 +1322,149 @@
 .view-all-alerts-btn:active {
   background: rgba(255, 255, 255, 0.07);
   color: white;
+}
+
+/* ── Stats bar ── */
+.alerts-stats-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 10px 20px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  flex-shrink: 0;
+}
+.alerts-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.alerts-stat-val {
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, white, rgba(255,255,255,0.65));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.alerts-stat-lbl {
+  font-size: 10px;
+  font-weight: 600;
+  color: #52525b;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.alerts-stat-divider {
+  width: 1px;
+  height: 28px;
+  background: rgba(255,255,255,0.06);
+}
+
+/* ── Activity section header ── */
+.activity-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2px 0 6px;
+}
+.activity-section-header > span {
+  font-size: 11px;
+  font-weight: 700;
+  color: #52525b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.clear-all-btn {
+  background: none;
+  border: none;
+  font-size: 11px;
+  font-weight: 600;
+  color: #a78bfa;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.clear-all-btn:active { background: rgba(139,92,246,0.12); }
+
+/* ── Notification type pill ── */
+.notif-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+.notif-type-pill {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 99px;
+  text-transform: capitalize;
+  letter-spacing: 0.2px;
+}
+.notif-time-inline { color: #52525b; }
+
+/* ── Request accepted / declined ── */
+.drawer-request-item.req-accepted {
+  border-color: rgba(16,185,129,0.25);
+  background: rgba(16,185,129,0.04);
+  opacity: 0.8;
+}
+.drawer-request-item.req-declined {
+  border-color: rgba(239,68,68,0.2);
+  background: rgba(239,68,68,0.03);
+  opacity: 0.6;
+}
+.req-status-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #52525b;
+  white-space: nowrap;
+}
+
+/* ── Empty state icon wrap ── */
+.alerts-empty-icon-wrap {
+  font-size: 44px;
+  width: 72px;
+  height: 72px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+.alerts-empty-action {
+  margin-top: 8px;
+  background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
+  border: none;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px 18px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  box-shadow: 0 4px 14px rgba(236,72,153,0.3);
+}
+.alerts-empty-action:active { opacity: 0.8; }
+
+/* ── Pulsing unread dot ── */
+@keyframes notif-dot-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(236,72,153,0.5); }
+  70%  { box-shadow: 0 0 0 5px rgba(236,72,153,0); }
+  100% { box-shadow: 0 0 0 0 rgba(236,72,153,0); }
+}
+
+/* ── Clickable items ── */
+.drawer-notif-item { cursor: pointer; }
+.drawer-notif-item:active { background: rgba(255,255,255,0.05) !important; }
+.drawer-request-item { cursor: pointer; }
+
+/* ── Activity tab badge variant ── */
+.alerts-tab-badge.activity { background: #8b5cf6; }
 
 /* Yearly Premium Gold card glows */
 .large-suggested-card.yearly-card-gold-glow {
