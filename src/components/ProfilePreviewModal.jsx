@@ -83,7 +83,7 @@ const ProfilePreviewModal = ({ user, isOpen, onClose }) => {
   };
 
   const handleQuickChat = async () => {
-    // Premium fast connect - goes straight to a real chat room
+    // Fast connect — goes straight to a real chat room
     const newChatId = await createQuickChat(user);
     if (newChatId) {
       onClose();
@@ -148,20 +148,12 @@ const ProfilePreviewModal = ({ user, isOpen, onClose }) => {
               </button>
             )}
 
-            {currentUser?.isPremium && relationship !== 'connected' && (
+            {relationship !== 'connected' && (
               <button className="btn-accent action-btn quick-chat" onClick={handleQuickChat}>
                 <Zap size={18} fill="currentColor" /> Quick Chat
               </button>
             )}
           </div>
-
-          {/* Anonymous Connect Toggle (Premium) */}
-          {currentUser?.isPremium && relationship === 'none' && (
-            <div className="anonymous-toggle">
-              <label>Send anonymously 🎭</label>
-              <input type="checkbox" className="toggle" />
-            </div>
-          )}
 
           {/* Safety Options Toggle */}
           <div className="safety-section">

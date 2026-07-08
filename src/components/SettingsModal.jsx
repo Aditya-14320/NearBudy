@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { X, MapPin, ChevronRight, Bell, Hand, Eye, Shield, HelpCircle, LogOut, FileText, Trash2, Crown } from 'lucide-react';
+import { X, MapPin, ChevronRight, Bell, Hand, Eye, Shield, HelpCircle, LogOut, FileText, Trash2 } from 'lucide-react';
 import { auth, db } from '../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useAppContext } from '../context/AppContext';
 import BlockedUsersModal from './BlockedUsersModal';
-import PremiumModal from './PremiumModal';
 import './SettingsModal.css';
 import { useNavigate } from 'react-router-dom';
 
@@ -12,7 +11,6 @@ const SettingsModal = ({ isOpen, onClose }) => {
   const { currentUser, setCurrentUser, deleteAccount } = useAppContext();
   const navigate = useNavigate();
   const [isBlockedModalOpen, setIsBlockedModalOpen] = useState(false);
-  const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   if (!isOpen || !currentUser) return null;
@@ -20,11 +18,6 @@ const SettingsModal = ({ isOpen, onClose }) => {
   const settings = currentUser.settings || { nearbyAlerts: true, waves: true, profileViews: true };
 
   const handleGhostToggle = async () => {
-    const isPremiumActive = currentUser?.isPremium && currentUser?.premiumExpiresAt && new Date(currentUser.premiumExpiresAt).getTime() > Date.now();
-    if (!isPremiumActive) {
-      setIsPremiumModalOpen(true);
-      return;
-    }
     try {
       const newGhostState = !currentUser.ghostMode;
       await updateDoc(doc(db, "users", currentUser.id), { ghostMode: newGhostState });
@@ -61,10 +54,6 @@ const SettingsModal = ({ isOpen, onClose }) => {
     setIsDeleting(false);
   };
 
-  const handlePaymentSuccess = (newExpiry) => {
-    setCurrentUser(prev => ({ ...prev, isPremium: true, premiumExpiresAt: newExpiry }));
-  };
-
   return (
     <div className="settings-overlay animate-fade-in" onClick={onClose}>
       <div className="settings-modal animate-slide-up" onClick={e => e.stopPropagation()}>
@@ -82,11 +71,6 @@ const SettingsModal = ({ isOpen, onClose }) => {
               <div className="item-left">
                 <div className="icon-wrapper"><MapPin size={20} /></div>
                 <span>Ghost Mode</span>
-                {!(currentUser?.isPremium && currentUser?.premiumExpiresAt && new Date(currentUser.premiumExpiresAt).getTime() > Date.now()) && (
-                  <span className="premium-lock-badge-small" style={{ fontSize: '10px', background: 'rgba(251, 191, 36, 0.15)', color: '#fbbf24', padding: '2px 8px', borderRadius: '10px', marginLeft: '8px', fontWeight: '800', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                    <Crown size={10} /> LOCK
-                  </span>
-                )}
               </div>
               <div className={`toggle-switch ${currentUser.ghostMode ? 'active' : ''}`}></div>
             </div>
@@ -151,45 +135,6 @@ const SettingsModal = ({ isOpen, onClose }) => {
             </div>
           </div>
 
-          {currentUser?.isPremium && currentUser?.premiumExpiresAt && new Date(currentUser.premiumExpiresAt).getTime() > Date.now() && (
-            <>
-              <h4 className="settings-group-title">Developer Tools</h4>
-              <div className="settings-group">
-                <div className="settings-item" onClick={async () => {
-                  try {
-                    const pastIso = new Date(Date.now() - 1000).toISOString();
-                    await updateDoc(doc(db, "users", currentUser.id), {
-                      isPremium: false,
-                      premiumPlan: null,
-                      premiumStart: null,
-                      premiumExpiresAt: pastIso,
-                      boostsRemaining: 0,
-                      boostUntil: null
-                    });
-                    setCurrentUser(prev => ({
-                      ...prev,
-                      isPremium: false,
-                      premiumPlan: null,
-                      premiumStart: null,
-                      premiumExpiresAt: pastIso,
-                      boostsRemaining: 0,
-                      boostUntil: null
-                    }));
-                    alert("Simulated Premium Expiry! Your account is reverted to free-tier status.");
-                  } catch (e) {
-                    console.error(e);
-                  }
-                }}>
-                  <div className="item-left">
-                    <div className="icon-wrapper" style={{background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444'}}><X size={20} /></div>
-                    <span style={{color: '#ef4444'}}>Simulate Expiry</span>
-                  </div>
-                  <ChevronRight size={20} className="chevron" style={{color: '#ef4444'}} />
-                </div>
-              </div>
-            </>
-          )}
-
           <div className="danger-zone">
             <button className="delete-account-btn" onClick={handleDeleteAccount} disabled={isDeleting}>
               <Trash2 size={20} />
@@ -203,12 +148,6 @@ const SettingsModal = ({ isOpen, onClose }) => {
         isOpen={isBlockedModalOpen} 
         onClose={() => setIsBlockedModalOpen(false)} 
       />
-      {isPremiumModalOpen && (
-        <PremiumModal 
-          onClose={() => setIsPremiumModalOpen(false)} 
-          onSuccess={handlePaymentSuccess} 
-        />
-      )}
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Flame, Bell, Search, Map, ArrowRight, RotateCw, X, SlidersHorizontal, UserPlus, MessageSquare, Check, Zap, Crown } from 'lucide-react';
+import { Flame, Bell, Search, Map, ArrowRight, RotateCw, X, SlidersHorizontal, UserPlus, MessageSquare, Check, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import ProfilePreviewModal from '../components/ProfilePreviewModal';
@@ -7,24 +7,7 @@ import PremiumModal from '../components/PremiumModal';
 import { getThumbnailUrl } from '../utils/cloudinary';
 import './Home.css';
 
-const isUserPremium = (user) => {
-  if (!user) return false;
-  if (!user.isPremium) return false;
-  if (!user.premiumExpiresAt) return false;
-  return new Date(user.premiumExpiresAt).getTime() > Date.now();
-};
 
-const VerifiedBadge = () => (
-  <svg 
-    viewBox="0 0 24 24" 
-    width="15" 
-    height="15" 
-    className="premium-verified-badge" 
-    style={{ color: '#3b82f6', fill: 'currentColor', marginLeft: '5px', verticalAlign: 'middle', display: 'inline-block', flexShrink: 0 }}
-  >
-    <path d="M23 12l-2.44-2.79.34-3.69-3.61-.82-1.89-3.2L12 2.96 8.6 1.5 6.71 4.7 3.1 5.52l.34 3.7L1 12l2.44 2.79-.34 3.69 3.61.82 1.89 3.2L12 21.04l3.4 1.46 1.89-3.2 3.61-.82-.34-3.69L23 12zm-13 5l-4-4 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-  </svg>
-);
 
 // Interest emojis mapping for styling actual user interests
 const INTEREST_EMOJIS = {
@@ -61,13 +44,13 @@ const Home = () => {
     sendRequest,
     acceptRequest,
     rejectRequest,
-    sendNotification
+    sendNotification,
+    locationPermission
   } = useAppContext();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
   // Search Filter States
@@ -181,13 +164,6 @@ const Home = () => {
         // ⚡ Profile Boost placement (absolute priority at the top)
         const isBoosted = u.boostUntil && u.boostUntil > Date.now();
         if (isBoosted) score += 5000;
-
-        // 👑 Premium priority ranking (priority appearance in suggestions)
-        const isPremium = u.isPremium && u.premiumExpiresAt && new Date(u.premiumExpiresAt).getTime() > Date.now();
-        if (isPremium) {
-          if (u.premiumPlan === 'monthly') score += 1000;
-          else if (u.premiumPlan === 'yearly') score += 2000;
-        }
 
         // ⚡ Active users boost (online recently)
         const activeTime = u.lastActive?.toMillis ? u.lastActive.toMillis() : 0;
@@ -310,6 +286,47 @@ const Home = () => {
           )}
         </button>
       </div>
+
+      {/* Location Permission Denied Banner */}
+      {locationPermission === 'denied' && (
+        <div id="location-denied-banner" style={{
+          background: 'linear-gradient(135deg, rgba(239,68,68,0.15), rgba(239,68,68,0.05))',
+          border: '1px solid rgba(239,68,68,0.35)',
+          borderRadius: '12px',
+          margin: '8px 16px 0',
+          padding: '12px 14px',
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: '10px',
+          fontSize: '13px',
+          lineHeight: '1.45'
+        }}>
+          <span style={{ fontSize: '20px', flexShrink: 0 }}>📍</span>
+          <div style={{ flex: 1 }}>
+            <strong style={{ color: '#f87171', display: 'block', marginBottom: '3px' }}>Location access blocked</strong>
+            <span style={{ color: 'var(--text-secondary)' }}>
+              NearBudy needs your location to show nearby people.
+              Click the <strong>🔒 lock / tune icon</strong> next to the URL bar → <strong>Site settings</strong> → set <strong>Location</strong> to <em>Allow</em>, then reload.
+            </span>
+            <button
+              onClick={() => navigator.geolocation?.getCurrentPosition(() => window.location.reload(), () => {})}
+              style={{
+                marginTop: '8px',
+                background: 'rgba(239,68,68,0.2)',
+                border: '1px solid rgba(239,68,68,0.4)',
+                borderRadius: '8px',
+                color: '#f87171',
+                fontSize: '12px',
+                padding: '4px 12px',
+                cursor: 'pointer',
+                fontWeight: 600
+              }}
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="home-content-new">
         {/* Polished Greeting Section */}
@@ -493,7 +510,7 @@ const Home = () => {
               
               return (
                 <div key={user.id} className="suggestion-card-wrapper">
-                  <div className={`large-suggested-card ${isUserPremium(user) && (user.premiumPlan === 'yearly' || !user.premiumPlan) ? 'yearly-card-gold-glow' : ''}`} onClick={() => {
+                  <div className="large-suggested-card" onClick={() => {
                     markAsViewed(user.id);
                     handleUserClick(user);
                   }}>
@@ -501,7 +518,6 @@ const Home = () => {
                     <img 
                       src={user.avatar ? getThumbnailUrl(user.avatar, 400) : '/default-avatar.png'} 
                       alt={user.name} 
-                      className={isUserPremium(user) && (user.premiumPlan === 'yearly' || !user.premiumPlan) ? 'card-img-yearly-gold' : ''} 
                     />
                     
                     {/* Tiny Status Badge at the top-left */}
@@ -521,12 +537,6 @@ const Home = () => {
                       {/* Name & Age directly from DB */}
                       <h4>
                         {user.name}
-                        {isUserPremium(user) && <VerifiedBadge />}
-                        {isUserPremium(user) && (user.premiumPlan === 'yearly' || !user.premiumPlan) && (
-                          <span className="yearly-supporter-badge" style={{ color: '#fbbf24', marginLeft: '5px', verticalAlign: 'middle', display: 'inline-flex', alignItems: 'center' }} title="Yearly Supporter">
-                            <Crown size={12} fill="#fbbf24" />
-                          </span>
-                        )}
                         {user.age ? `, ${user.age}` : ''}
                       </h4>
                       
@@ -643,7 +653,7 @@ const Home = () => {
                         <div key={req.id} className="drawer-request-item">
                           <img src={getThumbnailUrl(user.avatar, 80)} alt={user.name} className="drawer-item-avatar" />
                           <div className="drawer-item-info">
-                            <h5>{user.name}{isUserPremium(user) && <VerifiedBadge />}</h5>
+                            <h5>{user.name}</h5>
                             <p>{user.profession || 'Student'}</p>
                           </div>
                           <div className="drawer-item-actions">
@@ -701,12 +711,6 @@ const Home = () => {
         user={selectedUser}
         isOpen={!!selectedUser}
         onClose={() => setSelectedUser(null)}
-      />
-
-      <PremiumModal 
-        isOpen={isPremiumModalOpen} 
-        onClose={() => setIsPremiumModalOpen(false)} 
-        onPaymentSuccess={() => {}}
       />
     </div>
   );

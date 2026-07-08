@@ -8,7 +8,7 @@ import { Capacitor } from '@capacitor/core';
 /* eslint-disable react-refresh/only-export-components */
 const AppContext = createContext();
 
-// Add your email here to get lifetime full access (Premium)
+// App owner emails — used for admin identification only (no premium bypass in v1.0)
 const APP_OWNERS = [
   'adityadwivedi14320@gmail.com',
   'nearbudy0@gmail.com',
@@ -28,6 +28,7 @@ export const AppProvider = ({ children }) => {
   const notifiedRefs = useRef(new Set());
   const signingInAsGuest = useRef(false);
   const [sessionViews, setSessionViews] = useState(new Set());
+  const [locationPermission, setLocationPermission] = useState(null); // null | 'granted' | 'denied' | 'unavailable'
   const [skippedUsers, setSkippedUsers] = useState(() => {
     try {
       const saved = localStorage.getItem('skipped_users');
@@ -85,9 +86,8 @@ export const AppProvider = ({ children }) => {
           await setDoc(doc(db, "users", user.uid), userData);
         }
 
-        // Apply Owner Bypass (Lifetime Premium)
+        // Mark owner accounts for admin identification
         if (user.email && APP_OWNERS.includes(user.email)) {
-          userData.isPremium = true;
           userData.isOwner = true;
         }
         
@@ -104,8 +104,14 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     if (!currentUser || !currentUser.id) return;
 
+    if (!navigator.geolocation) {
+      setLocationPermission('unavailable');
+      return;
+    }
+
     const watchId = navigator.geolocation.watchPosition(
       async (position) => {
+        setLocationPermission('granted');
         const { latitude, longitude } = position.coords;
         // Only update if distance moved is significant (e.g. > 10m) to save DB writes
         const dist = getRawDistance(currentUser.lat, currentUser.lng, latitude, longitude);
@@ -118,7 +124,13 @@ export const AppProvider = ({ children }) => {
            } catch (e) { console.error("Live location update failed", e); }
         }
       },
-      (err) => console.error("Location watch error", err),
+      (err) => {
+        console.error("Location watch error", err);
+        // err.code 1 = PERMISSION_DENIED (blocked by user or browser policy)
+        if (err.code === 1) {
+          setLocationPermission('denied');
+        }
+      },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
 
@@ -180,12 +192,11 @@ export const AppProvider = ({ children }) => {
         };
       });
 
-      // Filter out current user, sort by distance, and exclude users in Ghost Mode (only if their premium is active)
+      // Filter out current user and sort by distance
+      // NOTE: Ghost Mode is preserved as a future-premium feature; currently no users have it active.
       realUsers = realUsers
         .filter(u => {
           if (u.id === currentUser.id) return false;
-          const uIsPremium = u.isPremium && u.premiumExpiresAt && new Date(u.premiumExpiresAt).getTime() > Date.now();
-          if (u.ghostMode && uIsPremium) return false;
           return true;
         })
         .sort((a, b) => a.rawDistance - b.rawDistance);
@@ -385,18 +396,8 @@ export const AppProvider = ({ children }) => {
       return;
     }
 
-    const isPremium = currentUser?.isPremium && currentUser?.premiumExpiresAt && new Date(currentUser.premiumExpiresAt).getTime() > Date.now();
-    let recentRequests = currentUser.requestHistory || [];
-    
-    if (!isPremium) {
-      const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
-      recentRequests = recentRequests.filter(timestamp => timestamp > twentyFourHoursAgo);
-
-      if (recentRequests.length >= 10) {
-        alert("🔒 Daily Limit Reached! You've sent 10 connection requests in the last 24 hours. Upgrade to Premium for unlimited likes and chat requests!");
-        return false;
-      }
-    }
+    // NOTE (v1.0): No daily request limit — all users have unlimited connection requests.
+    // To re-add the limit in a future version, restore the recentRequests gate here.
 
     try {
       const batch = writeBatch(db);
@@ -414,12 +415,7 @@ export const AppProvider = ({ children }) => {
         timestamp: serverTimestamp()
       });
 
-      const newHistory = [...recentRequests, Date.now()];
-      const userRef = doc(db, "users", currentUser.id);
-      batch.update(userRef, { requestHistory: newHistory });
-
       await batch.commit();
-      setCurrentUser(prev => ({ ...prev, requestHistory: newHistory }));
     } catch (e) {
       console.error("Error sending request:", e);
     }
@@ -619,7 +615,7 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  // Filter out blocked users and ghost mode users globally
+  // Filter out blocked users globally
   const visibleUsers = nearbyUsers.filter(u => {
     if (!currentUser) return false; // If not logged in, don't show users or wait for load
     
@@ -629,7 +625,7 @@ export const AppProvider = ({ children }) => {
     const theirBlockedIds = (u.blocked || []).map(b => b.id);
     if (theirBlockedIds.includes(currentUser.id)) return false; // They blocked me
     
-    if (u.ghostMode === true) return false;
+    // NOTE: Ghost Mode filtering is reserved for a future Premium tier.
     return true;
   });
 
@@ -737,7 +733,8 @@ export const AppProvider = ({ children }) => {
       deleteAccount,
       checkUsernameUnique,
       loginWithGoogle,
-      loginAsGuest
+      loginAsGuest,
+      locationPermission
     }}>
       {!loadingAuth && children}
     </AppContext.Provider>

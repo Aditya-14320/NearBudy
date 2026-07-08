@@ -3,7 +3,6 @@ import { ArrowLeft, Sparkles, Navigation, UserPlus, MessageCircle, Hand } from '
 import { MapContainer, Marker, Circle, useMap } from 'react-leaflet';
 import { useNavigate } from 'react-router-dom';
 import L from 'leaflet';
-import PremiumModal from '../components/PremiumModal';
 import ProfilePreviewModal from '../components/ProfilePreviewModal';
 import { useAppContext } from '../context/AppContext';
 import { getThumbnailUrl } from '../utils/cloudinary';
@@ -39,24 +38,7 @@ const isUserOnline = (user) => {
   }
 };
 
-const isUserPremium = (user) => {
-  if (!user) return false;
-  if (!user.isPremium) return false;
-  if (!user.premiumExpiresAt) return false;
-  return new Date(user.premiumExpiresAt).getTime() > Date.now();
-};
 
-const VerifiedBadge = () => (
-  <svg 
-    viewBox="0 0 24 24" 
-    width="14" 
-    height="14" 
-    className="premium-verified-badge" 
-    style={{ color: '#3b82f6', fill: 'currentColor', marginLeft: '4px', verticalAlign: 'middle', display: 'inline-block', flexShrink: 0 }}
-  >
-    <path d="M23 12l-2.44-2.79.34-3.69-3.61-.82-1.89-3.2L12 2.96 8.6 1.5 6.71 4.7 3.1 5.52l.34 3.7L1 12l2.44 2.79-.34 3.69 3.61.82 1.89 3.2L12 21.04l3.4 1.46 1.89-3.2 3.61-.82-.34-3.69L23 12zm-13 5l-4-4 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-  </svg>
-);
 
 // Coordinate offset jittering to prevent overlapping markers from completely blocking each other
 const adjustOverlappingCoordinates = (users) => {
@@ -174,8 +156,6 @@ const MapPage = () => {
     sendNotification
   } = useAppContext();
 
-  const [isPremium, setIsPremium] = useState(currentUser?.isPremium || false);
-  const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
@@ -241,10 +221,6 @@ const MapPage = () => {
       return true; // 'all' filter shows everyone
     });
   }, [allMapUsers, selectedFilter, getRelationship]);
-
-  const handlePaymentSuccess = () => {
-    setIsPremium(true);
-  };
 
   const handleUserClick = useCallback((user) => {
     setSelectedUser(user);
@@ -430,7 +406,7 @@ const MapPage = () => {
                   </div>
                   <div className="carousel-card-info">
                     <div className="carousel-name-row">
-                      <h4>{user.name}{isUserPremium(user) && <VerifiedBadge />}, {user.age || 22}</h4>
+                      <h4>{user.name}, {user.age || 22}</h4>
                       <span className="carousel-dist-tag">📍 {user.distance}</span>
                     </div>
                     <p className="carousel-prof">{user.profession || "NearBudy"}</p>
@@ -474,7 +450,7 @@ const MapPage = () => {
                 
                 <div className="list-user-details">
                   <div className="list-user-header">
-                    <h4>{user.name}{isUserPremium(user) && <VerifiedBadge />}, {user.age || 22}</h4>
+                    <h4>{user.name}, {user.age || 22}</h4>
                     <span className="list-dist-text">📍 {user.distance}</span>
                   </div>
                   <p className="list-user-profession">{user.profession || "Student"}</p>
@@ -516,14 +492,6 @@ const MapPage = () => {
           )}
         </div>
       )}
-
-      <PremiumModal 
-        isOpen={isPremiumModalOpen} 
-        onClose={() => setIsPremiumModalOpen(false)} 
-        onPaymentSuccess={handlePaymentSuccess}
-        customTitle="Unlock all nearby people"
-        customSubtitle="See who's around you with unlimited nearby access."
-      />
 
       <ProfilePreviewModal
         user={selectedUser}

@@ -1,14 +1,19 @@
 /**
- * Shared premium utilities for NearBudy
+ * Shared utilities for NearBudy
+ *
+ * NOTE: Premium features are intentionally disabled for v1.0.
+ * All users currently receive the full experience for free.
+ * To re-enable Premium in a future version, restore the real
+ * implementation of `isUserPremium` and remove the stub below.
  */
 
-/** Returns true if user has an active premium subscription. */
-export const isUserPremium = (user) => {
-  if (!user) return false;
-  if (!user.isPremium) return false;
-  if (!user.premiumExpiresAt) return false;
-  return new Date(user.premiumExpiresAt).getTime() > Date.now();
-};
+/**
+ * Returns true if user has an active premium subscription.
+ * STUB: Always returns false — Premium is disabled in v1.0.
+ * Future: restore real check using isPremium + premiumExpiresAt fields.
+ */
+// eslint-disable-next-line no-unused-vars
+export const isUserPremium = (_user) => false;
 
 /** Returns a normalized interests array from either a CSV string or an array. */
 export const getInterestsArray = (interests) => {
