@@ -4,6 +4,7 @@ import { auth, db } from '../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useAppContext } from '../context/AppContext';
 import BlockedUsersModal from './BlockedUsersModal';
+import PremiumModal from './PremiumModal';
 import './SettingsModal.css';
 import { useNavigate } from 'react-router-dom';
 
@@ -11,6 +12,7 @@ const SettingsModal = ({ isOpen, onClose }) => {
   const { currentUser, setCurrentUser, deleteAccount } = useAppContext();
   const navigate = useNavigate();
   const [isBlockedModalOpen, setIsBlockedModalOpen] = useState(false);
+  const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   if (!isOpen || !currentUser) return null;
@@ -105,6 +107,20 @@ const SettingsModal = ({ isOpen, onClose }) => {
 
           <h4 className="settings-group-title">Privacy & Safety</h4>
           <div className="settings-group">
+            <div className="settings-item" onClick={() => {
+              if (currentUser.isPremium) {
+                handleSettingToggle('privateBrowsing');
+              } else {
+                setIsPremiumModalOpen(true);
+              }
+            }}>
+              <div className="item-left">
+                <div className="icon-wrapper" style={{background: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8'}}><EyeOff size={20} /></div>
+                <span>Private Browsing <span style={{fontSize:'12px', background: 'rgba(251,191,36,0.2)', color: '#fbbf24', padding:'2px 6px', borderRadius:'10px', marginLeft:'6px'}}>Premium</span></span>
+              </div>
+              <div className={`toggle-switch ${settings.privateBrowsing ? 'active' : ''}`}></div>
+            </div>
+
             <div className="settings-item" onClick={() => setIsBlockedModalOpen(true)}>
               <div className="item-left">
                 <div className="icon-wrapper" style={{background: 'rgba(245, 158, 11, 0.1)', color: 'var(--warning)'}}><Shield size={20} /></div>
@@ -147,6 +163,11 @@ const SettingsModal = ({ isOpen, onClose }) => {
       <BlockedUsersModal 
         isOpen={isBlockedModalOpen} 
         onClose={() => setIsBlockedModalOpen(false)} 
+      />
+
+      <PremiumModal
+        isOpen={isPremiumModalOpen}
+        onClose={() => setIsPremiumModalOpen(false)}
       />
     </div>
   );

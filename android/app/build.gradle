@@ -7,8 +7,8 @@ android {
         applicationId "com.nearbudy.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 22
-        versionName "1.1.0"
+        versionCode 23
+        versionName "1.1.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -18,8 +18,15 @@ android {
     }
     buildTypes {
         release {
+            // NOTE: Set minifyEnabled to true if you want to optimize size and enable R8/ProGuard obfuscation.
+            // If you enable it, Gradle will automatically build the deobfuscation mapping.txt file.
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+
+            // Package native debug symbols inside the App Bundle (.aab)
+            ndk {
+                debugSymbolLevel 'FULL'
+            }
         }
     }
 

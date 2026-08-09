@@ -3,6 +3,7 @@ import { X, UserPlus, Zap, ShieldAlert, Ban, MessageCircle, Hand } from 'lucide-
 import { useAppContext } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 import ReportModal from './ReportModal';
+import PremiumModal from './PremiumModal';
 import { getOptimizedProfileUrl, getThumbnailUrl } from '../utils/cloudinary';
 import './ProfilePreviewModal.css';
 
@@ -22,10 +23,14 @@ const ProfilePreviewModal = ({ user, isOpen, onClose }) => {
   const navigate = useNavigate();
   const [showOptions, setShowOptions] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen && user && !user.isMock && currentUser && user.id !== currentUser.id) {
-      sendNotification(user.id, 'view', 'Someone viewed your profile 👀', currentUser.id, { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar });
+      const isPrivateBrowsing = currentUser.isPremium && currentUser.settings?.privateBrowsing;
+      if (!isPrivateBrowsing) {
+        sendNotification(user.id, 'view', 'Someone viewed your profile 👀', currentUser.id, { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar });
+      }
     }
   }, [isOpen, user, currentUser, sendNotification]);
 
@@ -149,8 +154,14 @@ const ProfilePreviewModal = ({ user, isOpen, onClose }) => {
             )}
 
             {relationship !== 'connected' && (
-              <button className="btn-accent action-btn quick-chat" onClick={handleQuickChat}>
-                <Zap size={18} fill="currentColor" /> Quick Chat
+              <button className="btn-accent action-btn quick-chat" onClick={() => {
+                if (currentUser.isPremium) {
+                  handleQuickChat();
+                } else {
+                  setIsPremiumModalOpen(true);
+                }
+              }}>
+                <Zap size={18} fill="currentColor" /> Quick Chat ✨ Premium
               </button>
             )}
           </div>
@@ -178,6 +189,11 @@ const ProfilePreviewModal = ({ user, isOpen, onClose }) => {
           setIsReportModalOpen(false);
           onClose();
         }} 
+      />
+
+      <PremiumModal 
+        isOpen={isPremiumModalOpen} 
+        onClose={() => setIsPremiumModalOpen(false)} 
       />
     </div>
   );

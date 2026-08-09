@@ -5,7 +5,6 @@ import { useAppContext } from '../context/AppContext';
 import { getThumbnailUrl } from '../utils/cloudinary';
 import './ChatsPage.css';
 
-// Helper to determine online presence
 const isUserOnline = (user) => {
   if (!user) return false;
   if (user.isMock) return user.name.length % 2 === 0;
@@ -37,7 +36,6 @@ const VerifiedBadge = () => (
   </svg>
 );
 
-// Helper to format chat timestamp dynamically
 const formatChatTime = (timestamp) => {
   if (!timestamp) return "Just now";
   try {
@@ -47,13 +45,13 @@ const formatChatTime = (timestamp) => {
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     
-    if (diffMins < 1) return "Just now";
+    if (diffMins < 1) return "Now";
     if (diffMins < 60) return `${diffMins}m`;
     if (diffHours < 24) return `${diffHours}h`;
     
     const yest = new Date();
     yest.setDate(now.getDate() - 1);
-    if (dateObj.toDateString() === yest.toDateString()) return "Yest";
+    if (dateObj.toDateString() === yest.toDateString()) return "Yesterday";
     
     return dateObj.toLocaleDateString([], { month: 'short', day: 'numeric' });
   } catch (e) {
@@ -66,22 +64,21 @@ const ChatsPage = () => {
   const { chats, currentUser, nearbyUsers } = useAppContext();
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Find all active online contacts (chats established where other user is online)
+  // Active online contacts for the top bar
   const onlineContacts = useMemo(() => {
     if (!currentUser) return [];
     return chats.map(chat => {
       const otherUserId = chat.users?.find(id => id !== currentUser.id);
       const otherUser = otherUserId ? chat.userDetails?.[otherUserId] : null;
       if (!otherUser) return null;
-      const fullOtherUser = nearbyUsers?.find(u => u.id === otherUserId) || otherUser;
+      const fullOtherUser = nearbyUsers?.find(u => u.id === otherUserId) || { ...otherUser, id: otherUserId };
       return {
         chatId: chat.id,
-        user: { ...fullOtherUser, id: otherUserId }
+        user: fullOtherUser
       };
     }).filter(contact => contact && isUserOnline(contact.user));
   }, [chats, currentUser, nearbyUsers]);
 
-  // Apply search query filter
   const filteredChats = useMemo(() => {
     if (!searchQuery.trim()) return chats;
     const queryStr = searchQuery.toLowerCase().trim();
@@ -89,11 +86,11 @@ const ChatsPage = () => {
       const otherUserId = chat.users?.find(id => id !== currentUser?.id);
       const otherUser = otherUserId ? chat.userDetails?.[otherUserId] : null;
       if (!otherUser) return false;
-      const fullOtherUser = nearbyUsers?.find(u => u.id === otherUserId) || otherUser;
+      const fullOtherUser = nearbyUsers?.find(u => u.id === otherUserId) || { ...otherUser, id: otherUserId };
       
       return (
         fullOtherUser.name?.toLowerCase().includes(queryStr) ||
-        chat.lastMessage?.toLowerCase().includes(queryStr)
+        (typeof chat.lastMessage === 'string' && chat.lastMessage.toLowerCase().includes(queryStr))
       );
     });
   }, [chats, searchQuery, currentUser, nearbyUsers]);
@@ -101,12 +98,12 @@ const ChatsPage = () => {
   return (
     <div className="chats-page-container animate-fade-in">
       <div className="chats-header">
-        <h2>Messages</h2>
+        <h2>Chats</h2>
         <div className="search-inbox-wrapper">
           <Search size={18} className="search-inbox-icon" />
           <input 
             type="text" 
-            placeholder="Search inbox..." 
+            placeholder="Search messages..." 
             value={searchQuery} 
             onChange={(e) => setSearchQuery(e.target.value)}
             className="search-inbox-input"
@@ -115,10 +112,8 @@ const ChatsPage = () => {
       </div>
 
       <div className="chats-content">
-        {/* Active Now stories row */}
-        {onlineContacts.length > 0 && (
+        {onlineContacts.length > 0 && !searchQuery && (
           <div className="active-stories-section">
-            <h3>Active Now</h3>
             <div className="active-stories-row">
               {onlineContacts.map(contact => (
                 <div 
@@ -142,8 +137,8 @@ const ChatsPage = () => {
             <div className="empty-icon-circle">
               <MessageCircle size={32} className="empty-icon" />
             </div>
-            <h3>No conversations</h3>
-            <p>{searchQuery ? "No matching conversations found." : "Find nearby people on the radar to start chatting!"}</p>
+            <h3>No messages</h3>
+            <p>{searchQuery ? "No matching chats found." : "Say hi to someone nearby on the map!"}</p>
           </div>
         ) : (
           <div className="chats-list">
@@ -152,7 +147,7 @@ const ChatsPage = () => {
               const otherUser = otherUserId ? chat.userDetails?.[otherUserId] : null;
               if (!otherUser) return null;
               
-              const fullOtherUser = nearbyUsers?.find(u => u.id === otherUserId) || otherUser;
+              const fullOtherUser = nearbyUsers?.find(u => u.id === otherUserId) || { ...otherUser, id: otherUserId };
               const isOnline = isUserOnline(fullOtherUser);
               const unreadCount = chat.unreadCount?.[currentUser?.id] || 0;
 
@@ -173,7 +168,7 @@ const ChatsPage = () => {
                           </span>
                         )}
                       </h4>
-                      <span>{formatChatTime(chat.updatedAt)}</span>
+                      <span className={unreadCount > 0 ? "time-unread" : "time-read"}>{formatChatTime(chat.updatedAt)}</span>
                     </div>
                     <div className="chat-msg-badge">
                       <p className={unreadCount > 0 ? 'unread-text' : ''}>{chat.lastMessage}</p>
@@ -191,3 +186,4 @@ const ChatsPage = () => {
 };
 
 export default ChatsPage;
+

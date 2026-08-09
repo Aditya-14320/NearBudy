@@ -160,8 +160,7 @@ const ChatScreen = () => {
   const [lightboxImage, setLightboxImage] = useState(null);
   const [heartPops, setHeartPops] = useState([]);
 
-  // Theme Wallpaper state
-  const [chatTheme, setChatTheme] = useState(() => localStorage.getItem(`nb_chat_theme_${id}`) || 'dark-space');
+  // Removed chatTheme
 
   // Audio Recording States
   const [isRecording, setIsRecording] = useState(false);
@@ -346,10 +345,14 @@ const ChatScreen = () => {
   };
 
   const handleSend = async () => {
-    if ((!inputText.trim() && !imageFile) || !currentUser || isUploading) return;
+    if (!inputText.trim() || !currentUser || isUploading) return;
 
     const textToSend = inputText.trim();
     const currentFile = imageFile;
+    
+    // Optimistically clear the UI
+    setInputText('');
+    clearAttachment();
     
     setIsUploading(true);
     setUploadProgress(0);
@@ -402,11 +405,11 @@ const ChatScreen = () => {
 
       await updateDoc(doc(db, "chats", id), updateData);
 
-      setInputText('');
-      clearAttachment();
     } catch (e) {
       console.error("Error sending message:", e);
       alert("Failed to send message. Please try again.");
+      // If it failed, restore the text so they don't lose it
+      if (textToSend) setInputText(textToSend);
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
@@ -484,23 +487,7 @@ const ChatScreen = () => {
     }, 800);
   };
 
-  // Toggle Wallpaper Theme
-  const toggleTheme = () => {
-    const isPremium = currentUser?.isPremium && currentUser?.premiumExpiresAt && new Date(currentUser.premiumExpiresAt).getTime() > Date.now();
-    const tier = isPremium ? (currentUser?.premiumPlan || 'yearly') : null;
-
-    if (tier !== 'monthly' && tier !== 'yearly') {
-      alert("🔒 Chat Wallpapers are exclusive to Monthly and Yearly premium members!");
-      return;
-    }
-    const themes = ['dark-space', 'neon-grid', 'deep-ocean', 'sunset-aura'];
-    const currentIndex = themes.indexOf(chatTheme);
-    const nextIndex = (currentIndex + 1) % themes.length;
-    const nextTheme = themes[nextIndex];
-    setChatTheme(nextTheme);
-    localStorage.setItem(`nb_chat_theme_${id}`, nextTheme);
-  };
-
+  // Removed toggleTheme
   // Voice Note Recording functions
   const startRecording = async () => {
     try {
@@ -619,7 +606,7 @@ const ChatScreen = () => {
   });
 
   return (
-    <div className={`chat-screen theme-${chatTheme} animate-fade-in`}>
+    <div className="chat-screen animate-fade-in">
       <div className="chat-header">
         <button className="icon-btn back-btn" onClick={() => navigate(-1)}>
           <ArrowLeft size={22} />
@@ -658,9 +645,6 @@ const ChatScreen = () => {
           
           {isMenuOpen && (
             <div className="header-dropdown animate-fade-in">
-              <button className="dropdown-item" onClick={toggleTheme}>
-                🎨 Change Theme
-              </button>
               <button className="dropdown-item" onClick={() => { setIsReportModalOpen(true); setIsMenuOpen(false); }}>
                 <ShieldAlert size={18} /> Report User
               </button>
@@ -792,84 +776,35 @@ const ChatScreen = () => {
         )}
         
         <div className="chat-input-area">
-          {isRecording ? (
-            <div className="recording-panel animate-fade-in">
-              <button className="cancel-record-btn" onClick={cancelRecording} disabled={isUploading}>
-                <X size={18} />
-              </button>
-              <div className="recording-indicator">
-                <span className="recording-dot-glow"></span>
-                <span>Recording {formatDuration(recordingTime)}</span>
-              </div>
-              <div className="recording-waves">
-                <span className="wave-bar"></span>
-                <span className="wave-bar"></span>
-                <span className="wave-bar"></span>
-                <span className="wave-bar"></span>
-              </div>
-              <button className="send-voice-btn active" onClick={stopRecording} disabled={isUploading}>
-                <Send size={18} />
-              </button>
-            </div>
-          ) : (
-            <>
-              <div className="input-glass-wrapper">
-                <button className="icon-btn-secondary" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
-                  <ImageIcon size={22} />
-                </button>
-                
-                <input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  onChange={handleImagePick} 
-                  accept="image/*" 
-                  style={{ display: 'none' }} 
-                />
-                
-                <textarea 
-                  className="chat-input" 
-                  placeholder="Message..." 
-                  value={inputText}
-                  rows={1}
-                  onChange={(e) => {
-                    handleType(e.target.value);
-                    e.target.style.height = 'auto';
-                    e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSend();
-                    }
-                  }}
-                  onFocus={scrollToBottom}
-                  disabled={isUploading}
-                />
-                
-                <button className="icon-btn-secondary emoji-btn" disabled={isUploading}>
-                  <Smile size={22} />
-                </button>
-              </div>
+          <div className="input-glass-wrapper">
+            <textarea 
+              className="chat-input" 
+              placeholder="Message..." 
+              value={inputText}
+              rows={1}
+              onChange={(e) => {
+                handleType(e.target.value);
+                e.target.style.height = 'auto';
+                e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              onFocus={scrollToBottom}
+              disabled={isUploading}
+            />
+          </div>
 
-              {(inputText.trim() || imageFile) ? (
-                <button 
-                  className="send-btn active" 
-                  onClick={handleSend}
-                  disabled={isUploading}
-                >
-                  <Send size={20} />
-                </button>
-              ) : (
-                <button 
-                  className="send-btn active mic-trigger-btn"
-                  onClick={startRecording}
-                  disabled={isUploading}
-                >
-                  <Mic size={20} />
-                </button>
-              )}
-            </>
-          )}
+          <button 
+            className={`send-btn ${inputText.trim() ? 'active' : ''}`}
+            onClick={handleSend}
+            disabled={isUploading || !inputText.trim()}
+          >
+            <Send size={20} />
+          </button>
         </div>
         <p className="ugc-notice">Keep it respectful. All content is moderated.</p>
       </div>

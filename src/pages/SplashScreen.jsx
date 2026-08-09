@@ -24,7 +24,7 @@ const SplashScreen = () => {
   return (
     <div className="splash-container animate-fade-in">
       <div className="logo-wrapper animate-pulse">
-        <img src="/app-icon.png" alt="NearBudy Logo" className="splash-logo" />
+        <div className="splash-logo" style={{ fontSize: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', boxShadow: 'none' }}>🐣</div>
       </div>
       <h1 className="app-title">NearBudy</h1>
       <p className="app-subtitle">Connect Nearby.</p>

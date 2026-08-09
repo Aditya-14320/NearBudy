@@ -1,618 +1,210 @@
-.modal-overlay {
+.premium-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(5, 5, 8, 0.85);
+  background: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   z-index: 2000;
   display: flex;
+  align-items: center;
   justify-content: center;
-  align-items: flex-end;
+  padding: 20px;
 }
 
 .premium-modal {
-  background: #0f111a;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  border-top-left-radius: 32px;
-  border-top-right-radius: 32px;
-  width: 100%;
-  max-width: 480px;
-  /* Full-screen height so bottom nav is hidden behind modal */
-  height: 100dvh;
-  max-height: 100dvh;
-  padding: 32px 24px 0 24px;
-  position: relative;
-  box-shadow: 0 -15px 40px rgba(0, 0, 0, 0.6);
-  color: white;
-  overflow-y: auto;
-  overflow-x: hidden;
-  display: flex;
-  flex-direction: column;
-  /* Hide scrollbar visually */
-  scrollbar-width: none;
-}
-.premium-modal::-webkit-scrollbar { display: none; }
-
-.close-btn, .back-drawer-btn {
-  position: absolute;
-  top: 24px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-secondary);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #a1a1aa;
-  width: 36px;
-  height: 36px;
+  border-radius: 28px;
+  width: 100%;
+  max-width: 440px;
+  padding: 30px 24px;
+  position: relative;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+}
+
+.premium-modal::before {
+  content: '';
+  position: absolute;
+  top: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 200px;
+  background: var(--accent-gradient);
+  filter: blur(100px);
+  opacity: 0.2;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.premium-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
+  color: white;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   cursor: pointer;
   z-index: 10;
-  transition: all 0.2s;
 }
 
-.close-btn {
-  right: 24px;
-}
-
-.back-drawer-btn {
-  left: 24px;
-}
-
-.close-btn:active, .back-drawer-btn:active {
-  transform: scale(0.9);
-}
-
-.modal-header {
+.premium-hero {
   text-align: center;
-  margin-bottom: 20px;
+  position: relative;
+  z-index: 1;
+  margin-bottom: 24px;
 }
 
-.premium-badge-large {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
-  color: white;
-  font-size: 11px;
-  font-weight: 800;
-  padding: 4px 12px;
-  border-radius: 12px;
-  margin-bottom: 12px;
-  box-shadow: 0 4px 15px rgba(251, 191, 36, 0.25);
-  letter-spacing: 0.5px;
-}
-
-.crown-icon-spin {
-  animation: crown-glow 3s infinite ease-in-out;
-}
-
-@keyframes crown-glow {
-  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 1px white); }
-  50% { transform: scale(1.15) rotate(15deg); filter: drop-shadow(0 0 4px #fbbf24); }
-}
-
-.modal-header h2 {
+.premium-hero h2 {
   font-size: 24px;
   font-weight: 800;
-  margin: 0 0 6px 0;
-  letter-spacing: -0.5px;
+  margin-bottom: 6px;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.modal-header p {
-  font-size: 13px;
-  color: #a1a1aa;
-  margin: 0;
-  line-height: 1.4;
+.premium-hero p {
+  color: var(--text-secondary);
+  font-size: 15px;
 }
 
-/* Pricing Grid Tiers */
-.pricing-options-row {
+.pricing-cards-container {
   display: flex;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
+  position: relative;
+  z-index: 1;
 }
 
-.price-card-box {
+.pricing-card {
   flex: 1;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1.5px solid rgba(255, 255, 255, 0.06);
-  border-radius: 18px;
-  padding: 18px 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 16px 12px;
   text-align: center;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  transition: all 0.2s ease;
 }
 
-.price-card-box:active {
-  transform: scale(0.96);
+.pricing-card:hover {
+  background: rgba(255, 255, 255, 0.05);
 }
 
-.price-card-box.active {
-  border-color: #3b82f6;
-  background: rgba(59, 130, 246, 0.04);
-  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.1);
+.pricing-card.active {
+  border-color: #fbbf24;
+  background: rgba(251, 191, 36, 0.08);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(251, 191, 36, 0.15);
 }
 
-.popular-ribbon {
+.pricing-badge {
   position: absolute;
   top: -10px;
   left: 50%;
   transform: translateX(-50%);
-  background: #3b82f6;
-  color: white;
-  font-size: 9px;
-  font-weight: 800;
-  padding: 2px 10px;
-  border-radius: 10px;
-  letter-spacing: 0.5px;
-  white-space: nowrap;
-}
-
-.popular-ribbon.best-value {
-  background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
-  box-shadow: 0 4px 10px rgba(251, 191, 36, 0.3);
-}
-
-.plan-name-label {
-  font-size: 13px;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 10px;
   font-weight: 700;
-  color: #a1a1aa;
-  margin-bottom: 2px;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 12px;
+  white-space: nowrap;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.plan-duration-tag {
-  font-size: 11px;
-  color: #71717a;
-  margin-bottom: 12px;
+.pricing-card.active .pricing-badge.popular {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #1a1a1a;
+  border: none;
 }
 
-.plan-price-value {
+.pricing-card.active .pricing-badge.value {
+  background: linear-gradient(135deg, #a855f7, #9333ea);
+  color: white;
+  border: none;
+}
+
+.pricing-card h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  margin-top: 8px;
+}
+
+.pricing-card.active h4 {
+  color: var(--text-primary);
+}
+
+.price-val {
   font-size: 24px;
   font-weight: 800;
   color: white;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
   line-height: 1;
 }
 
-.currency-symbol {
-  font-size: 14px;
-  font-weight: 600;
-  color: #a1a1aa;
-  margin-right: 2px;
-  margin-top: 2px;
-}
-
-/* Upgrade button */
-.upgrade-checkout-btn {
-  width: 100%;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-  border: none;
-  color: white;
-  height: 54px;
-  border-radius: 16px;
-  font-size: 15px;
-  font-weight: 800;
-  cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.35);
-  transition: all 0.2s;
-  letter-spacing: -0.2px;
-}
-
-.upgrade-checkout-btn:active {
-  transform: scale(0.98);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
-}
-
-/* Sticky CTA Footer */
-.paywall-sticky-footer {
-  position: sticky;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: linear-gradient(to top, #0f111a 80%, transparent);
-  padding: 16px 0 calc(20px + env(safe-area-inset-bottom)) 0;
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-}
-
-.restore-purchases-btn {
-  background: transparent;
-  border: none;
-  color: #6b7280;
+.price-period {
   font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 8px;
-  border-radius: 8px;
-  transition: color 0.2s;
+  color: var(--text-secondary);
 }
 
-.restore-purchases-btn:active {
-  color: #a1a1aa;
+.premium-footer {
+  position: relative;
+  z-index: 1;
+  margin-bottom: 24px;
 }
 
-.restore-msg {
-  font-size: 11px;
-  color: #10b981;
-  margin: -4px 0 0 0;
-  animation: fadeIn 0.3s ease;
-}
-
-.paywall-terms-line {
-  font-size: 10.5px;
-  color: #52525b;
-  text-align: center;
-  line-height: 1.5;
-  margin: 0;
-  padding: 0 8px;
-}
-
-.paywall-terms-line a {
-  color: #6b7280;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-/* Dynamic Tiered Benefits list styles */
-.tiered-benefits {
-  background: rgba(255, 255, 255, 0.015);
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  border-radius: 20px;
-  padding: 16px 20px;
-  max-height: 180px;
-  overflow-y: auto;
-  text-align: left;
-  margin-bottom: 20px;
-}
-
-.benefits-title {
-  font-size: 11px;
-  font-weight: 800;
-  color: #71717a;
-  margin: 0 0 12px 0;
-  letter-spacing: 0.5px;
-}
-
-.benefits-grid-box {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.tiered-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: transparent !important;
-  border: none !important;
-  padding: 0 !important;
-  border-radius: 0 !important;
-}
-
-.tiered-item span {
-  font-size: 13px;
-  color: #e4e4e7;
-  line-height: 1.4;
-}
-
-.benefit-check-green {
-  color: #10b981;
-  flex-shrink: 0;
-}
-
-/* Google Play Billing Sheet */
-.google-play-billing-sheet {
-  background: #1c1e21;
-  border-radius: 24px;
-  padding: 20px 20px 8px 20px;
-  text-align: left;
-  display: flex;
-  flex-direction: column;
-  color: #e3e3e3;
-  margin: -10px -10px 0 -10px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-}
-
-.play-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.play-store-brand {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.play-triangle {
-  color: #00e676;
-  font-size: 15px;
-  transform: rotate(90deg);
-  text-shadow: 0 0 5px rgba(0, 230, 118, 0.3);
-}
-
-.play-brand-text {
-  font-size: 15px;
-  font-weight: 700;
-  color: white;
-  letter-spacing: -0.2px;
-}
-
-.play-close-btn {
-  background: transparent;
+.btn-upgrade-premium {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: #1a1a1a;
   border: none;
-  color: #8e9196;
+  border-radius: 16px;
+  font-size: 16px;
+  font-weight: 700;
   cursor: pointer;
+  box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3);
+  transition: all 0.2s;
 }
 
-.play-account-selector {
+.btn-upgrade-premium:active {
+  transform: scale(0.98);
+}
+
+.premium-features-simple-list {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: rgba(255, 255, 255, 0.03);
-  padding: 10px 14px;
-  border-radius: 12px;
-  cursor: pointer;
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+  z-index: 1;
+  padding: 0 16px;
 }
 
-.account-details-row {
+.simple-feature-item {
   display: flex;
   align-items: center;
   gap: 12px;
-}
-
-.account-avatar-small {
-  width: 24px;
-  height: 24px;
-  background: #00796b;
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.account-info-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.account-email {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: white;
-}
-
-.account-provider {
-  font-size: 10px;
-  color: #8e9196;
-}
-
-.play-chevron {
-  color: #8e9196;
-}
-
-.play-divider {
-  border: 0;
-  height: 1px;
-  background: rgba(255, 255, 255, 0.06);
-  margin: 18px 0;
-}
-
-.play-product-summary {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-}
-
-.product-text h4 {
-  font-size: 14.5px;
-  font-weight: 700;
-  color: white;
-  margin: 0 0 4px 0;
-}
-
-.product-auto-renew-info {
-  font-size: 11.5px;
-  color: #8e9196;
-  line-height: 1.4;
-  margin: 0;
-}
-
-.product-pricing-box {
-  text-align: right;
-  flex-shrink: 0;
-}
-
-.current-price {
-  font-size: 16px;
-  font-weight: 700;
-  color: white;
-}
-
-.tax-info {
-  font-size: 9px;
-  color: #8e9196;
-  margin-top: 2px;
-}
-
-.play-payment-method {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
-
-.method-left-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.gpay-logo-capsule {
-  background: white;
-  color: #1f1f1f;
-  font-size: 9.5px;
-  font-weight: 800;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-family: sans-serif;
-  letter-spacing: -0.5px;
-}
-
-.card-mask-text {
-  font-size: 13px;
-  color: white;
-  font-weight: 600;
-}
-
-.method-change-link {
-  color: #00e676;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.google-play-subscribe-btn {
-  background: #00875a;
-  color: white;
-  width: 100%;
-  height: 48px;
-  border-radius: 24px;
-  border: none;
   font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.2s;
-  box-shadow: 0 4px 12px rgba(0, 135, 90, 0.25);
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  color: var(--text-primary);
+  font-weight: 500;
 }
 
-.google-play-subscribe-btn:active {
-  background: #006644;
-}
-
-.play-terms-footer {
-  font-size: 10px;
-  color: #8e9196;
-  line-height: 1.45;
-  margin: 16px 0 0 0;
-  text-align: center;
-}
-
-/* Checkout processing view */
-.checkout-processing-view {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  text-align: center;
-}
-
-.checkout-spinner {
-  width: 50px;
-  height: 50px;
-  border: 4px solid rgba(59, 130, 246, 0.1);
-  border-top-color: #3b82f6;
-  border-radius: 50%;
-  animation: spin-checkout 0.8s linear infinite;
-  margin-bottom: 24px;
-  box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
-}
-
-@keyframes spin-checkout {
-  to { transform: rotate(360deg); }
-}
-
-.checkout-processing-view h3 {
-  font-size: 20px;
-  font-weight: 800;
-  margin: 0 0 8px 0;
-}
-
-.checkout-step-text {
-  font-size: 13px;
-  color: #a1a1aa;
-  margin: 0 0 24px 0;
-  height: 18px;
-}
-
-.secure-tag-sub {
-  font-size: 11px;
-  color: #71717a;
-  margin: 0;
-}
-
-/* Success view */
-.checkout-success-view {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  text-align: center;
-}
-
-.success-glowing-circle {
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  background: rgba(16, 185, 129, 0.1);
-  border: 2px solid #10b981;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #10b981;
-  margin-bottom: 24px;
-  animation: success-pulse 1.5s infinite alternate;
-}
-
-.check-success {
-  filter: drop-shadow(0 0 5px rgba(16, 185, 129, 0.4));
-}
-
-@keyframes success-pulse {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-  100% { transform: scale(1.05); box-shadow: 0 0 20px 8px rgba(16, 185, 129, 0.1); }
-}
-
-.checkout-success-view h3 {
-  font-size: 22px;
-  font-weight: 800;
-  color: #10b981;
-  margin: 0 0 8px 0;
-}
-
-.checkout-success-view p {
-  font-size: 13px;
-  color: #a1a1aa;
-  margin: 0;
+.check-icon {
+  color: #fbbf24;
+  flex-shrink: 0;
 }

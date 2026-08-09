@@ -312,8 +312,8 @@ const Home = () => {
       {/* Header */}
       <div className="home-header-new">
         <div className="logo-title">
-          <div className="logo-box">
-            <Flame size={20} strokeWidth={2.5} color="white" fill="white" />
+          <div className="logo-box" style={{ background: 'transparent', boxShadow: 'none' }}>
+            <span style={{ fontSize: '28px', lineHeight: 1 }}>🐣</span>
           </div>
           <h2>Nearby</h2>
         </div>

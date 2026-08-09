@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Settings, Edit2, Globe, Share2, Users, ChevronRight, MapPin, Briefcase, Zap } from 'lucide-react';
+import { Settings, Edit2, Globe, Share2, Users, ChevronRight, MapPin, Briefcase, Zap, Lock } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 import { doc, updateDoc } from 'firebase/firestore';
@@ -7,6 +7,7 @@ import { db } from '../firebase';
 
 import EditProfileModal from '../components/EditProfileModal';
 import SettingsModal from '../components/SettingsModal';
+import PremiumModal from '../components/PremiumModal';
 import { getOptimizedProfileUrl } from '../utils/cloudinary';
 import './Profile.css';
 
@@ -18,7 +19,21 @@ const Profile = () => {
   
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('about'); // 'about' or 'circle'
+
+  const timeAgo = (dateObj) => {
+    if (!dateObj) return '';
+    const date = dateObj?.toDate ? dateObj.toDate() : new Date(dateObj);
+    const seconds = Math.floor((new Date() - date) / 1000);
+    if (seconds < 60) return 'just now';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes} min ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} hr ago`;
+    const days = Math.floor(hours / 24);
+    return `${days} d ago`;
+  };
 
   const handleShare = async () => {
     const inviteText = `Hey! Join me on NearBudy, a cool app to discover and chat with people nearby. Use my code: ${currentUser.referralCode || 'NEARBUDY'}\n\nDownload here: https://nearbudy.vercel.app`;
@@ -240,6 +255,43 @@ const Profile = () => {
                 <Share2 size={20} className="share-icon-right" />
               </div>
 
+              {/* Premium Profile Views Section */}
+              <div className="profile-views-premium-section" style={{ background: 'var(--bg-secondary)', borderRadius: '16px', padding: '16px', margin: '0 16px 20px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div className="views-header" style={{ marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h4 style={{ margin: 0, fontSize: '15px' }}>👀 {notifications.filter(n => n.type === 'view').length} Profile Views</h4>
+                </div>
+                
+                {!currentUser.isPremium ? (
+                  <div className="premium-locked-views" onClick={() => setIsPremiumModalOpen(true)} style={{ background: 'rgba(251, 191, 36, 0.05)', padding: '20px', borderRadius: '12px', textAlign: 'center', cursor: 'pointer', border: '1px solid rgba(251, 191, 36, 0.2)' }}>
+                    <div className="lock-icon-wrap" style={{ marginBottom: '8px' }}><Lock size={24} color="#fbbf24" style={{ margin: '0 auto' }} /></div>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '12px' }}>Upgrade to Premium to see who viewed your profile.</p>
+                    <button className="unlock-premium-btn" style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)', color: '#1a1a1a', border: 'none', padding: '8px 16px', borderRadius: '20px', fontWeight: 'bold', fontSize: '13px' }}>Unlock Premium</button>
+                  </div>
+                ) : (
+                  <div className="premium-views-list" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {notifications.filter(n => n.type === 'view').length === 0 ? (
+                      <p className="no-views-yet" style={{ color: 'var(--text-secondary)', fontSize: '14px', textAlign: 'center', padding: '10px 0' }}>No views yet. Try boosting your profile!</p>
+                    ) : (
+                      notifications.filter(n => n.type === 'view').sort((a,b) => b.timestamp - a.timestamp).map(notif => {
+                        const viewer = notif.fromUser || { name: 'Someone', avatar: '/avatars/neutral.png' };
+                        return (
+                          <div key={notif.id} className="premium-view-item" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <img src={getOptimizedProfileUrl(viewer.avatar)} alt={viewer.name} style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
+                            <div className="view-info" style={{ flex: 1 }}>
+                              <strong style={{ display: 'block', fontSize: '14px' }}>{viewer.name}</strong>
+                              <span style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>{timeAgo(notif.timestamp)}</span>
+                            </div>
+                            <button className="view-action-btn" onClick={() => navigate('/chat/' + viewer.id)} style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                               <Zap size={14} fill="currentColor" />
+                            </button>
+                          </div>
+                        )
+                      })
+                    )}
+                  </div>
+                )}
+              </div>
+
               {/* Navigation lists */}
               <div className="menu-list-container-tab">
                 <div className="menu-list-item-tab" onClick={() => navigate('/notifications')}>
@@ -276,6 +328,11 @@ const Profile = () => {
       <SettingsModal 
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
+      />
+
+      <PremiumModal
+        isOpen={isPremiumModalOpen}
+        onClose={() => setIsPremiumModalOpen(false)}
       />
     </div>
   );

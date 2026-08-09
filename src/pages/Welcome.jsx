@@ -37,7 +37,7 @@ const Welcome = () => {
         {/* Header Section */}
         <div className="welcome-header animate-slide-up">
           <div className="welcome-logo-container">
-            <img src="/app-icon.png" alt="NearBudy Logo" className="welcome-logo" />
+            <div className="welcome-logo" style={{ fontSize: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', boxShadow: 'none' }}>🐣</div>
             <div className="logo-glow"></div>
           </div>
           <h1 className="welcome-title">NearBudy</h1>
