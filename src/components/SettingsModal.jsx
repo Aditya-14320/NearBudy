@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, MapPin, ChevronRight, Bell, Hand, Eye, Shield, HelpCircle, LogOut, FileText, Trash2 } from 'lucide-react';
+import { X, MapPin, ChevronRight, Bell, Hand, Eye, EyeOff, Shield, HelpCircle, LogOut, FileText, Trash2 } from 'lucide-react';
 import { auth, db } from '../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useAppContext } from '../context/AppContext';

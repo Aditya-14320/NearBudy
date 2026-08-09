@@ -345,7 +345,7 @@ const ChatScreen = () => {
   };
 
   const handleSend = async () => {
-    if (!inputText.trim() || !currentUser || isUploading) return;
+    if ((!inputText.trim() && !imageFile) || !currentUser || isUploading) return;
 
     const textToSend = inputText.trim();
     const currentFile = imageFile;
@@ -354,8 +354,10 @@ const ChatScreen = () => {
     setInputText('');
     clearAttachment();
     
-    setIsUploading(true);
-    setUploadProgress(0);
+    if (currentFile) {
+      setIsUploading(true);
+      setUploadProgress(0);
+    }
 
     // Clear typing status immediately when sending
     clearTimeout(typingTimer.current);
@@ -411,8 +413,10 @@ const ChatScreen = () => {
       // If it failed, restore the text so they don't lose it
       if (textToSend) setInputText(textToSend);
     } finally {
-      setIsUploading(false);
-      setUploadProgress(0);
+      if (currentFile) {
+        setIsUploading(false);
+        setUploadProgress(0);
+      }
       scrollToBottom();
     }
   };
