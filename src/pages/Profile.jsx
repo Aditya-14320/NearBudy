@@ -65,6 +65,11 @@ const Profile = () => {
 
 
   const handleBoostProfile = async () => {
+    if (!currentUser?.isPremium) {
+      setIsPremiumModalOpen(true);
+      return;
+    }
+
     if (isBoostActive) {
       alert("Your profile is already boosted!");
       return;

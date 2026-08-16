@@ -7,30 +7,26 @@ import './PremiumModal.css';
 
 const PremiumModal = ({ isOpen, onClose }) => {
   const { currentUser, setCurrentUser } = useAppContext();
-  const [selectedPlan, setSelectedPlan] = useState('monthly');
 
   if (!isOpen || !currentUser) return null;
 
   const handleUpgrade = async () => {
     try {
-      let durationMs = 0;
-      if (selectedPlan === 'weekly') durationMs = 7 * 24 * 60 * 60 * 1000;
-      if (selectedPlan === 'monthly') durationMs = 30 * 24 * 60 * 60 * 1000;
-      if (selectedPlan === 'yearly') durationMs = 365 * 24 * 60 * 60 * 1000;
+      const durationMs = 30 * 24 * 60 * 60 * 1000; // 1 month
 
       const userRef = doc(db, "users", currentUser.id);
       await updateDoc(userRef, {
         isPremium: true,
-        premiumPlan: selectedPlan,
+        premiumPlan: 'monthly',
         premiumExpiresAt: Date.now() + durationMs
       });
       setCurrentUser(prev => ({
         ...prev,
         isPremium: true,
-        premiumPlan: selectedPlan,
+        premiumPlan: 'monthly',
         premiumExpiresAt: Date.now() + durationMs
       }));
-      alert(`✨ Success! You are now a Premium member on the ${selectedPlan} plan. Enjoy the exclusive features!`);
+      alert(`✨ Success! You are now a Premium member. Enjoy the exclusive features!`);
       onClose();
     } catch (e) {
       console.error("Upgrade error:", e);
@@ -50,26 +46,12 @@ const PremiumModal = ({ isOpen, onClose }) => {
           <p>Connect more. Discover more.</p>
         </div>
 
-        <div className="pricing-cards-container">
-          <div className={`pricing-card ${selectedPlan === 'weekly' ? 'active' : ''}`} onClick={() => setSelectedPlan('weekly')}>
-            <span className="pricing-badge">Try Premium</span>
-            <h4>⚡ Weekly</h4>
-            <div className="price-val">₹39</div>
-            <span className="price-period">/week</span>
-          </div>
-
-          <div className={`pricing-card ${selectedPlan === 'monthly' ? 'active' : ''}`} onClick={() => setSelectedPlan('monthly')}>
-            <span className="pricing-badge popular">Most popular</span>
-            <h4>⭐ Monthly</h4>
-            <div className="price-val">₹69</div>
+        <div className="pricing-cards-container" style={{ display: 'flex', justifyContent: 'center' }}>
+          <div className="pricing-card active" style={{ width: '100%', maxWidth: '250px' }}>
+            <span className="pricing-badge popular">Unlock Everything</span>
+            <h4>⭐ NearBudy Pro</h4>
+            <div className="price-val">₹99</div>
             <span className="price-period">/month</span>
-          </div>
-
-          <div className={`pricing-card ${selectedPlan === 'yearly' ? 'active' : ''}`} onClick={() => setSelectedPlan('yearly')}>
-            <span className="pricing-badge value">Best value</span>
-            <h4>👑 Yearly</h4>
-            <div className="price-val">₹799</div>
-            <span className="price-period">/year</span>
           </div>
         </div>
 

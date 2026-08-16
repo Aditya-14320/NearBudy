@@ -39,6 +39,19 @@ service cloud.firestore {
       }
     }
 
+    // Calls Collection
+    match /calls/{callId} {
+      allow read, update, delete: if isSignedIn() && (request.auth.uid == resource.data.callerId || request.auth.uid == resource.data.receiverId);
+      allow create: if isSignedIn() && request.auth.uid == request.resource.data.callerId;
+      
+      match /callerCandidates/{candidateId} {
+        allow read, create: if isSignedIn();
+      }
+      match /receiverCandidates/{candidateId} {
+        allow read, create: if isSignedIn();
+      }
+    }
+
     // Requests Collection
     match /requests/{requestId} {
       allow read: if isSignedIn() && (request.auth.uid == resource.data.fromId || request.auth.uid == resource.data.toId);

@@ -1,19 +1,22 @@
 import { useState } from 'react';
 import { X, MapPin, ChevronRight, Bell, Hand, Eye, EyeOff, Shield, HelpCircle, LogOut, FileText, Trash2 } from 'lucide-react';
 import { auth, db } from '../firebase';
+import { signOut } from 'firebase/auth';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useAppContext } from '../context/AppContext';
 import BlockedUsersModal from './BlockedUsersModal';
 import PremiumModal from './PremiumModal';
+import SupportModal from './SupportModal';
 import './SettingsModal.css';
 import { useNavigate } from 'react-router-dom';
 
 const SettingsModal = ({ isOpen, onClose }) => {
-  const { currentUser, setCurrentUser, deleteAccount } = useAppContext();
+  const { currentUser, setCurrentUser } = useAppContext();
   const navigate = useNavigate();
   const [isBlockedModalOpen, setIsBlockedModalOpen] = useState(false);
   const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   if (!isOpen || !currentUser) return null;
 
@@ -39,21 +42,23 @@ const SettingsModal = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleDeleteAccount = async () => {
-    const confirmed = window.confirm("⚠️ Are you absolutely sure? This will permanently delete your account, your profile, and all your data. This action CANNOT be undone.");
+  const handleLogout = async () => {
+    const confirmed = window.confirm("Are you sure you want to log out?");
     if (!confirmed) return;
 
-    const doubleConfirmed = window.confirm("Final Warning: Do you want to permanently delete all your data?");
-    if (!doubleConfirmed) return;
-
-    setIsDeleting(true);
-    const success = await deleteAccount();
-    if (success) {
+    setIsLoggingOut(true);
+    try {
+      await signOut(auth);
       localStorage.clear();
+      setCurrentUser(null);
       navigate('/');
       onClose();
+    } catch (error) {
+      console.error("Error logging out:", error);
+      alert("Failed to log out. Please try again.");
+    } finally {
+      setIsLoggingOut(false);
     }
-    setIsDeleting(false);
   };
 
   return (
@@ -142,7 +147,7 @@ const SettingsModal = ({ isOpen, onClose }) => {
               </div>
               <ChevronRight size={20} className="chevron" />
             </div>
-            <div className="settings-item">
+            <div className="settings-item" onClick={() => setIsSupportModalOpen(true)}>
               <div className="item-left">
                 <div className="icon-wrapper" style={{background: 'var(--bg-tertiary)'}}><HelpCircle size={20} /></div>
                 <span>Help & Support</span>
@@ -152,9 +157,9 @@ const SettingsModal = ({ isOpen, onClose }) => {
           </div>
 
           <div className="danger-zone">
-            <button className="delete-account-btn" onClick={handleDeleteAccount} disabled={isDeleting}>
-              <Trash2 size={20} />
-              <span>{isDeleting ? 'Deleting...' : 'Delete Account'}</span>
+            <button className="delete-account-btn" onClick={handleLogout} disabled={isLoggingOut}>
+              <LogOut size={20} />
+              <span>{isLoggingOut ? 'Logging out...' : 'Log Out'}</span>
             </button>
           </div>
         </div>
@@ -168,6 +173,11 @@ const SettingsModal = ({ isOpen, onClose }) => {
       <PremiumModal
         isOpen={isPremiumModalOpen}
         onClose={() => setIsPremiumModalOpen(false)}
+      />
+
+      <SupportModal
+        isOpen={isSupportModalOpen}
+        onClose={() => setIsSupportModalOpen(false)}
       />
     </div>
   );

@@ -404,6 +404,43 @@
   cursor: not-allowed;
 }
 
+.google-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.secondary-signin-btn {
+  width: 100%;
+  padding: 1rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  font-size: 1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 12px;
+}
+
+.secondary-signin-btn:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.secondary-signin-btn:active:not(:disabled) {
+  transform: translateY(2px);
+}
+
+.secondary-signin-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Spinner */
 .spinner {
   width: 22px;

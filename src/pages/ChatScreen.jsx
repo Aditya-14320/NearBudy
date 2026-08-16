@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef, Fragment, useMemo } from 'react';
-import { ArrowLeft, Image as ImageIcon, Send, MoreVertical, Check, CheckCheck, X, Smile, ShieldAlert, Ban, Mic, Crown } from 'lucide-react';
+import { ArrowLeft, Image as ImageIcon, Send, MoreVertical, Check, CheckCheck, X, Smile, ShieldAlert, Ban, Mic, Crown, Phone, Video, Camera } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
+import { useCallContext } from '../context/CallContext';
 import { db, storage } from '../firebase';
 import ReportModal from '../components/ReportModal';
+import PremiumModal from '../components/PremiumModal';
 import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, updateDoc, doc, increment } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { getThumbnailUrl } from '../utils/cloudinary';
@@ -145,6 +147,7 @@ const ChatScreen = () => {
   const id = useParams().id;
   const navigate = useNavigate();
   const { chats, currentUser, nearbyUsers, reportUser, blockUser, sendNotification } = useAppContext();
+  const { startCall } = useCallContext();
   
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
@@ -154,6 +157,7 @@ const ChatScreen = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
 
   // Upgraded States
   const [selectedMessageId, setSelectedMessageId] = useState(null);
@@ -643,6 +647,15 @@ const ChatScreen = () => {
         </div>
 
         <div className="header-actions">
+          <button className="icon-btn" onClick={() => {
+            if (isUserPremium(currentUser)) {
+              startCall(chatUser.id, 'audio');
+            } else {
+              setIsPremiumModalOpen(true);
+            }
+          }}>
+            <Phone size={22} />
+          </button>
           <button className="icon-btn" onClick={() => setIsMenuOpen(!isMenuOpen)}>
             <MoreVertical size={22} />
           </button>
@@ -779,8 +792,34 @@ const ChatScreen = () => {
           </div>
         )}
         
-        <div className="chat-input-area">
-          <div className="input-glass-wrapper">
+        {isRecording ? (
+          <div className="recording-panel animate-scale-in">
+            <button className="cancel-record-btn icon-btn" onClick={cancelRecording}>
+              <X size={20} />
+            </button>
+            <div className="recording-indicator">
+              <div className="recording-dot-glow"></div>
+              <span>{formatDuration(recordingTime)}</span>
+            </div>
+            <button className="send-voice-btn" onClick={stopRecording}>
+              <Send size={16} />
+            </button>
+          </div>
+        ) : (
+          <div className="chat-input-area">
+            <div className="input-actions-left">
+              <button className="input-action-btn" onClick={() => document.getElementById('chat-image-upload').click()}>
+                <Camera size={24} color="#f5f5f5" />
+              </button>
+              <input 
+                type="file" 
+                id="chat-image-upload" 
+                accept="image/*" 
+                style={{ display: 'none' }} 
+                onChange={handleImagePick} 
+              />
+            </div>
+            
             <textarea 
               className="chat-input" 
               placeholder="Message..." 
@@ -789,7 +828,7 @@ const ChatScreen = () => {
               onChange={(e) => {
                 handleType(e.target.value);
                 e.target.style.height = 'auto';
-                e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+                e.target.style.height = `${Math.min(e.target.scrollHeight, 100)}px`;
               }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
@@ -800,16 +839,29 @@ const ChatScreen = () => {
               onFocus={scrollToBottom}
               disabled={isUploading}
             />
-          </div>
 
-          <button 
-            className={`send-btn ${inputText.trim() ? 'active' : ''}`}
-            onClick={handleSend}
-            disabled={isUploading || !inputText.trim()}
-          >
-            <Send size={20} />
-          </button>
-        </div>
+            <div className="input-actions-right">
+              {inputText.trim() ? (
+                <button 
+                  className="send-text-btn"
+                  onClick={handleSend}
+                  disabled={isUploading}
+                >
+                  Send
+                </button>
+              ) : (
+                <>
+                  <button className="input-action-btn" onClick={startRecording}>
+                    <Mic size={24} color="#f5f5f5" />
+                  </button>
+                  <button className="input-action-btn" onClick={() => document.getElementById('chat-image-upload').click()}>
+                    <ImageIcon size={24} color="#f5f5f5" />
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
         <p className="ugc-notice">Keep it respectful. All content is moderated.</p>
       </div>
 
@@ -843,6 +895,11 @@ const ChatScreen = () => {
         user={chatUser} 
         isOpen={isReportModalOpen} 
         onClose={() => setIsReportModalOpen(false)} 
+      />
+
+      <PremiumModal 
+        isOpen={isPremiumModalOpen} 
+        onClose={() => setIsPremiumModalOpen(false)} 
       />
     </div>
   );

@@ -536,17 +536,16 @@ const Home = () => {
         <div className="suggested-section-mockup">
           <div className="section-header-mockup">
             <h3>🔥 People You May Like</h3>
-            <div className="header-actions-mockup">
-              <button className="refresh-btn-pill" onClick={() => setRefreshKey(prev => prev + 1)}>
-                <RotateCw size={12} strokeWidth={2.5} />
-                <span>Refresh</span>
-              </button>
-              <button className="see-all-link">See all</button>
-            </div>
           </div>
           
           <div className="suggested-cards-scroll">
-            {filteredUsers.map(user => {
+            {(() => {
+              const displayedUsers = currentUser?.isPremium ? filteredUsers : filteredUsers.slice(0, 3);
+              const isTruncated = !currentUser?.isPremium && filteredUsers.length > 3;
+
+              return (
+                <>
+                  {displayedUsers.map(user => {
               const status = getConnectionStatus(user.id);
               const userIsOnline = isOnline(user);
               
@@ -651,17 +650,47 @@ const Home = () => {
                       )}
                     </div>
                   </div>
-                  
-                  {/* Skip Close Button */}
-                  <button className="skip-user-btn" onClick={(e) => {
-                    e.stopPropagation();
-                    markAsSkipped(user.id);
-                  }}>
-                    <X size={14} strokeWidth={2.5} />
+                    {/* Skip Close Button */}
+                    <button className="skip-user-btn" onClick={(e) => {
+                      e.stopPropagation();
+                      markAsSkipped(user.id);
+                    }}>
+                      <X size={14} strokeWidth={2.5} />
+                    </button>
+                  </div>
+                );
+              })}
+
+              {/* Unlock Premium Banner for truncated suggestions */}
+              {!currentUser?.isPremium && filteredUsers.length > 3 && (
+                <div 
+                  className="suggestion-card-wrapper unlock-premium-card" 
+                  onClick={() => setIsPremiumModalOpen(true)}
+                  style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    flexDirection: 'column',
+                    background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(239, 68, 68, 0.1))',
+                    border: '1px solid rgba(251, 191, 36, 0.3)',
+                    cursor: 'pointer',
+                    minWidth: '220px',
+                    borderRadius: '24px'
+                  }}
+                >
+                  <div style={{ background: 'var(--accent-gradient)', padding: '16px', borderRadius: '50%', marginBottom: '16px', boxShadow: '0 4px 15px rgba(251,191,36,0.4)' }}>
+                    <Zap size={28} fill="white" color="white" />
+                  </div>
+                  <h3 style={{ color: 'white', marginBottom: '8px', fontSize: '18px', fontWeight: '800' }}>See All Matches</h3>
+                  <p style={{ color: 'var(--text-secondary)', textAlign: 'center', fontSize: '13px', padding: '0 16px' }}>Unlock NearBudy Pro to see {filteredUsers.length - 3} more suggested users.</p>
+                  <button className="btn-primary" style={{ marginTop: '16px', padding: '8px 20px', fontSize: '13px', borderRadius: '12px' }}>
+                    Unlock Premium
                   </button>
                 </div>
-              );
-            })}
+              )}
+              </>
+            );
+          })()}
             
             {filteredUsers.length === 0 && (
               <div className="empty-suggested-container">

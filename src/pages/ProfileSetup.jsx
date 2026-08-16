@@ -1,52 +1,48 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Camera, Check, ChevronRight, ChevronLeft, User, AtSign, Briefcase, Heart, Sparkles, AlertCircle, MapPin } from 'lucide-react';
+import { Camera, Sparkles, AlertCircle } from 'lucide-react';
 import { auth, db } from '../firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { useAppContext } from '../context/AppContext';
+import { INDIA_STATES } from '../utils/locations';
 import { AVATAR_PRESETS, getDefaultAvatar } from '../utils/avatars';
 import { uploadToCloudinary } from '../utils/cloudinary';
 import './ProfileSetup.css';
-
-
 
 const ProfileSetup = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const { setCurrentUser, checkUsernameUnique } = useAppContext();
   
-  const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [usernameStatus, setUsernameStatus] = useState('idle'); // idle, checking, taken, available
   const [suggestions, setSuggestions] = useState([]);
-  const [gpsLoading, setGpsLoading] = useState(false);
-  const [gpsStatus, setGpsStatus] = useState('idle'); // idle, loading, success, error
   
   const [formData, setFormData] = useState({
     name: '',
     username: '',
-    profession: '',
-    age: '',
-    gender: '',
-    bio: '',
-    interests: [],
+    dob: '',
+    gender: 'Male',
+    state: '',
     city: '',
     lat: null,
-    lng: null,
-    agreeToTerms: true
+    lng: null
   });
+  
   const [photo, setPhoto] = useState(null);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [interestInput, setInterestInput] = useState('');
 
-  // Pre-fill for Google users or Guests
+  // Pre-fill for Google users
   useEffect(() => {
     const user = auth.currentUser;
     if (user) {
+      const baseName = user.displayName || '';
+      const baseUsername = baseName ? baseName.toLowerCase().replace(/[^a-z0-9_]/gi, '') + Math.floor(100 + Math.random() * 899) : '';
+      
       setFormData(prev => ({
         ...prev,
-        name: user.displayName || '',
-        username: user.displayName ? user.displayName.toLowerCase().replace(/\s+/g, '') : ''
+        name: baseName,
+        username: baseUsername
       }));
       if (user.photoURL) {
         setPhoto(user.photoURL);
@@ -85,22 +81,8 @@ const ProfileSetup = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleInterestKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      const val = interestInput.trim();
-      if (val && !formData.interests.includes(val)) {
-        setFormData({ ...formData, interests: [...formData.interests, val] });
-        setInterestInput('');
-      }
-    }
-  };
-
-  const removeInterest = (idx) => {
-    setFormData({
-      ...formData,
-      interests: formData.interests.filter((_, i) => i !== idx)
-    });
+  const handleStateChange = (e) => {
+    setFormData(prev => ({ ...prev, state: e.target.value, city: '' }));
   };
 
   const handlePhotoChange = async (e) => {
@@ -129,62 +111,25 @@ const ProfileSetup = () => {
     });
   };
 
-  const handleGpsFetch = async () => {
-    setGpsLoading(true);
-    setGpsStatus('loading');
-    try {
-      if (!navigator.geolocation) {
-        setGpsStatus('error');
-        setGpsLoading(false);
-        alert("Geolocation is not supported by your browser.");
-        return;
-      }
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setFormData(prev => ({
-            ...prev,
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          }));
-          setGpsStatus('success');
-          setGpsLoading(false);
-        },
-        (error) => {
-          console.error("GPS fetch error:", error);
-          setGpsStatus('error');
-          setGpsLoading(false);
-          alert("Failed to get your location. Please check your GPS permission.");
-        },
-        { timeout: 8000, enableHighAccuracy: true }
-      );
-    } catch (err) {
-      console.error(err);
-      setGpsStatus('error');
-      setGpsLoading(false);
-    }
-  };
-
   const handleFinish = async () => {
+    if (!formData.name.trim() || usernameStatus !== 'available' || !formData.state || !formData.dob) {
+      alert("Please complete all required fields correctly.");
+      return;
+    }
+
     setLoading(true);
     try {
       const user = auth.currentUser;
       if (user) {
-        let coords = { lat: formData.lat || 28.6304, lng: formData.lng || 77.2177 };
-        
-        // If GPS coordinate is not explicitly set, try to get it
-        if (!formData.lat || !formData.lng) {
-          try {
-            const gps = await getLocation();
-            if (gps) {
-              coords = gps;
-            }
-          } catch (e) {
-            console.log("Could not auto-fetch location on finish", e);
-          }
+        let coords = { lat: 28.6304, lng: 77.2177 };
+        try {
+          const gps = await getLocation();
+          if (gps) coords = gps;
+        } catch (e) {
+          console.log("Could not auto-fetch location", e);
         }
 
         let finalAvatar = photo || getDefaultAvatar(formData.gender);
-        
         const isPreset = Object.values(AVATAR_PRESETS).flat().includes(photo);
         if (photo && !isPreset && photo.startsWith('data:image')) {
           try {
@@ -198,12 +143,9 @@ const ProfileSetup = () => {
           id: user.uid,
           name: formData.name,
           username: formData.username.toLowerCase(),
-          profession: formData.profession || '',
-          age: parseInt(formData.age, 10) || 0,
-          dob: '',
-          gender: formData.gender || '',
-          bio: formData.bio || '',
-          interests: formData.interests.join(', '),
+          dob: formData.dob,
+          gender: formData.gender,
+          state: formData.state,
           city: formData.city,
           avatar: finalAvatar,
           isPremium: false,
@@ -227,251 +169,137 @@ const ProfileSetup = () => {
     }
   };
 
-  const nextStep = () => {
-    if (step === 0 && (!formData.name.trim() || usernameStatus !== 'available')) return;
-    if (step === 2 && !formData.city.trim()) return;
-    setStep(s => s + 1);
-  };
-
-  const prevStep = () => setStep(s => s - 1);
-
-  const steps = [
-    { title: "Who are you?", icon: <User size={24} /> },
-    { title: "The Basics", icon: <Sparkles size={24} /> },
-    { title: "Location", icon: <MapPin size={24} /> },
-    { title: "Profession & Bio", icon: <Briefcase size={24} /> },
-    { title: "Profile Picture", icon: <Camera size={24} /> }
-  ];
+  // State options
+  const stateOptions = Object.keys(INDIA_STATES);
 
   return (
-    <div className="onboarding-container animate-fade-in">
-      <div className="onboarding-progress">
-        {steps.map((_, i) => (
-          <div key={i} className={`progress-dot ${i <= step ? 'active' : ''} ${i === step ? 'current' : ''}`} />
-        ))}
-      </div>
-
-      <div className="onboarding-card glass-morphism animate-slide-up">
+    <div className="onboarding-container animate-fade-in" style={{ padding: '20px 0' }}>
+      <div className="onboarding-card glass-morphism animate-slide-up" style={{ maxHeight: '95vh', overflowY: 'auto' }}>
+        
         <div className="step-header">
-          <div className="step-icon-bg">{steps[step].icon}</div>
-          <h2>{steps[step].title}</h2>
-          <p>Step {step + 1} of {steps.length}</p>
+          <h2>Create Your Profile</h2>
+          <p>Let's get you set up to meet people nearby.</p>
         </div>
 
-        <div className="step-content">
-          {step === 0 && (
-            <div className="animate-fade-in">
-              <div className="input-group-premium">
-                <label>Display Name</label>
-                <input 
-                  type="text" 
-                  name="name" 
-                  value={formData.name} 
-                  onChange={handleChange} 
-                  placeholder="Your real name or nickname"
-                  className="premium-input"
-                />
-              </div>
-              <div className="input-group-premium">
-                <label>Username</label>
-                <div className="username-input-wrapper">
-                  <span className="at-symbol">@</span>
-                  <input 
-                    type="text" 
-                    name="username" 
-                    value={formData.username} 
-                    onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value.replace(/[^a-z0-9_]/gi, '').toLowerCase() }))} 
-                    placeholder="unique_handle"
-                    className={`premium-input ${usernameStatus === 'taken' ? 'error' : ''} ${usernameStatus === 'available' ? 'success' : ''}`}
-                  />
-                </div>
-                {usernameStatus === 'checking' && <p className="status-text">Checking availability...</p>}
-                {usernameStatus === 'taken' && (
-                  <div className="suggestions-box animate-fade-in">
-                    <p className="error-text"><AlertCircle size={14} /> Username already taken</p>
-                    <div className="suggestion-chips">
-                      {suggestions.map(s => (
-                        <span key={s} className="suggestion-chip" onClick={() => setFormData(prev => ({ ...prev, username: s }))}>@{s}</span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {usernameStatus === 'available' && <p className="success-text">Username is available! ✨</p>}
-              </div>
+        <div className="step-content" style={{ marginTop: '20px' }}>
+          {/* Profile Photo */}
+          <div className="input-group-premium" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div className="main-photo-preview" onClick={() => fileInputRef.current.click()} style={{ cursor: 'pointer', marginBottom: '10px' }}>
+              {photo ? <img src={photo} alt="Preview" /> : <Camera size={40} />}
+              <div className="camera-badge"><Camera size={14} /></div>
             </div>
-          )}
+            <input type="file" ref={fileInputRef} onChange={handlePhotoChange} accept="image/*" hidden />
+            <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Tap to change photo</span>
+          </div>
 
-          {step === 1 && (
-            <div className="animate-fade-in">
-              <div className="input-group-premium">
-                <label>Age (Optional)</label>
-                <input 
-                  type="number" 
-                  name="age" 
-                  min="18"
-                  max="99"
-                  value={formData.age} 
-                  onChange={handleChange} 
-                  placeholder="e.g. 21"
-                  className="premium-input"
-                />
-              </div>
-              <div className="input-group-premium">
-                <label>Gender (Optional)</label>
-                <div className="gender-grid">
-                  {['Male', 'Female', 'Other'].map(g => (
-                    <div 
-                      key={g} 
-                      className={`gender-option ${formData.gender === g ? 'active' : ''}`}
-                      onClick={() => setFormData(prev => ({ ...prev, gender: g }))}
-                    >
-                      {g}
-                    </div>
+          <div className="input-group-premium">
+            <label>Name</label>
+            <input 
+              type="text" 
+              name="name" 
+              value={formData.name} 
+              onChange={handleChange} 
+              placeholder="Your full name"
+              className="premium-input"
+            />
+          </div>
+
+          <div className="input-group-premium">
+            <label>Username</label>
+            <div className="username-input-wrapper">
+              <span className="at-symbol">@</span>
+              <input 
+                type="text" 
+                name="username" 
+                value={formData.username} 
+                onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value.replace(/[^a-z0-9_]/gi, '').toLowerCase() }))} 
+                placeholder="unique_handle"
+                className={`premium-input ${usernameStatus === 'taken' ? 'error' : ''} ${usernameStatus === 'available' ? 'success' : ''}`}
+              />
+            </div>
+            {usernameStatus === 'checking' && <p className="status-text">Checking availability...</p>}
+            {usernameStatus === 'taken' && (
+              <div className="suggestions-box animate-fade-in">
+                <p className="error-text"><AlertCircle size={14} /> Username already taken</p>
+                <div className="suggestion-chips">
+                  {suggestions.map(s => (
+                    <span key={s} className="suggestion-chip" onClick={() => setFormData(prev => ({ ...prev, username: s }))}>@{s}</span>
                   ))}
                 </div>
               </div>
-            </div>
-          )}
+            )}
+            {usernameStatus === 'available' && <p className="success-text">Username is available! ✨</p>}
+          </div>
 
-          {step === 2 && (
-            <div className="animate-fade-in">
-              <div className="input-group-premium">
-                <label>City / Town (Required)</label>
-                <input 
-                  type="text" 
-                  name="city" 
-                  value={formData.city} 
-                  onChange={handleChange} 
-                  placeholder="e.g. New Delhi, San Francisco"
-                  className="premium-input"
-                />
-              </div>
+          <div className="input-group-premium">
+            <label>Date of Birth</label>
+            <input 
+              type="date" 
+              name="dob" 
+              value={formData.dob} 
+              onChange={handleChange} 
+              className="premium-input"
+            />
+          </div>
 
-            </div>
-          )}
-
-          {step === 3 && (
-            <div className="animate-fade-in">
-              <div className="input-group-premium">
-                <label>Profession or College (Optional)</label>
-                <input 
-                  type="text" 
-                  name="profession" 
-                  value={formData.profession} 
-                  onChange={handleChange} 
-                  placeholder="e.g. Software Engineer, College Student"
-                  className="premium-input"
-                />
-              </div>
-              <div className="input-group-premium">
-                <label>Bio (Optional)</label>
-                <textarea 
-                  name="bio" 
-                  value={formData.bio} 
-                  onChange={handleChange} 
-                  placeholder="Tell us a bit about yourself..."
-                  className="premium-input textarea"
-                  maxLength={120}
-                />
-              </div>
-              <div className="input-group-premium">
-                <label>Interests (Optional)</label>
-                <div className="interest-chips">
-                  {formData.interests.map((it, idx) => (
-                    <span key={idx} className="interest-chip">
-                      {it} <X size={14} onClick={() => removeInterest(idx)} />
-                    </span>
-                  ))}
+          <div className="input-group-premium">
+            <label>Gender</label>
+            <div className="gender-grid">
+              {['Male', 'Female', 'Other'].map(g => (
+                <div 
+                  key={g} 
+                  className={`gender-option ${formData.gender === g ? 'active' : ''}`}
+                  onClick={() => setFormData(prev => ({ ...prev, gender: g }))}
+                >
+                  {g}
                 </div>
-                <input 
-                  type="text" 
-                  value={interestInput}
-                  onChange={(e) => setInterestInput(e.target.value)}
-                  onKeyDown={handleInterestKeyDown}
-                  placeholder="Add interest & press Enter"
-                  className="premium-input"
-                />
-              </div>
+              ))}
             </div>
-          )}
+          </div>
 
-          {step === 4 && (
-            <div className="animate-fade-in center">
-              <div className="photo-picker-container">
-                <div className="main-photo-preview" onClick={() => fileInputRef.current.click()}>
-                  {photo ? <img src={photo} alt="Preview" /> : <Camera size={40} />}
-                  <div className="camera-badge"><Sparkles size={16} /></div>
-                </div>
-                <input type="file" ref={fileInputRef} onChange={handlePhotoChange} accept="image/*" hidden />
-                
-                <p className="picker-hint">Or choose an avatar</p>
-                <div className="avatar-grid-premium">
-                  {[...AVATAR_PRESETS.male, ...AVATAR_PRESETS.female].slice(0, 8).map((url, i) => (
-                    <div 
-                      key={i} 
-                      className={`avatar-item-premium ${photo === url ? 'active' : ''}`}
-                      onClick={() => setPhoto(url)}
-                    >
-                      <img src={url} alt="avatar" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="onboarding-footer">
-          {step > 0 && (
-            <button className="btn-back" onClick={prevStep}>
-              <ChevronLeft size={20} /> Back
-            </button>
-          )}
-          
-          {(step === 1 || step === 3 || step === 4) && (
-             <button className="btn-skip" onClick={step === 4 ? handleFinish : nextStep}>
-               Skip
-             </button>
-          )}
-
-          {step < steps.length - 1 ? (
-            <button 
-              className="btn-next" 
-              onClick={nextStep} 
-              disabled={
-                (step === 0 && (!formData.name.trim() || usernameStatus !== 'available')) ||
-                (step === 2 && !formData.city.trim())
-              }
+          <div className="input-group-premium">
+            <label>State</label>
+            <select 
+              name="state" 
+              value={formData.state} 
+              onChange={handleStateChange}
+              className="premium-input"
+              style={{ appearance: 'none', background: 'var(--bg-tertiary)' }}
             >
-              Continue <ChevronRight size={20} />
-            </button>
-          ) : (
-            <button className="btn-finish" onClick={handleFinish} disabled={loading}>
-              {loading ? 'Finalizing...' : 'Get Started'} <Sparkles size={20} />
-            </button>
-          )}
+              <option value="">Select State</option>
+              {stateOptions.map(state => (
+                <option key={state} value={state}>{state}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="input-group-premium">
+            <label>City (Optional)</label>
+            <input 
+              type="text"
+              name="city" 
+              value={formData.city} 
+              onChange={handleChange}
+              placeholder="e.g. Mumbai, Delhi"
+              className="premium-input"
+            />
+          </div>
+
+        </div>
+
+        <div className="onboarding-footer" style={{ marginTop: '30px' }}>
+          <button 
+            className="btn-finish" 
+            onClick={handleFinish} 
+            disabled={loading || !formData.name.trim() || usernameStatus !== 'available' || !formData.state || !formData.dob}
+            style={{ width: '100%', margin: 0 }}
+          >
+            {loading ? 'Saving...' : 'Continue'} <Sparkles size={20} />
+          </button>
         </div>
       </div>
     </div>
   );
 };
-
-const X = ({ size, onClick }) => (
-  <svg 
-    width={size} 
-    height={size} 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    strokeWidth="2" 
-    strokeLinecap="round" 
-    strokeLinejoin="round" 
-    onClick={onClick}
-    style={{ cursor: 'pointer' }}
-  >
-    <line x1="18" y1="6" x2="6" y2="18"></line>
-    <line x1="6" y1="6" x2="18" y2="18"></line>
-  </svg>
-);
 
 export default ProfileSetup;

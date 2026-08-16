@@ -4,6 +4,7 @@ import { MapContainer, Marker, Circle, useMap } from 'react-leaflet';
 import { useNavigate } from 'react-router-dom';
 import L from 'leaflet';
 import ProfilePreviewModal from '../components/ProfilePreviewModal';
+import PremiumModal from '../components/PremiumModal';
 import { useAppContext } from '../context/AppContext';
 import { getThumbnailUrl } from '../utils/cloudinary';
 import 'leaflet/dist/leaflet.css';
@@ -158,10 +159,23 @@ const MapPage = () => {
 
   const [selectedUser, setSelectedUser] = useState(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
+
+  const isPremium = useMemo(() => {
+    return currentUser?.isPremium && currentUser?.premiumExpiresAt && new Date(currentUser.premiumExpiresAt).getTime() > Date.now();
+  }, [currentUser]);
 
   // View States
   const [viewMode, setViewMode] = useState('radar'); // 'radar' | 'list'
   const [selectedFilter, setSelectedFilter] = useState('all');
+
+  const handleFilterClick = (filterId) => {
+    if (filterId !== 'all' && !isPremium) {
+      setIsPremiumModalOpen(true);
+      return;
+    }
+    setSelectedFilter(filterId);
+  };
 
   const myCenter = useMemo(() => {
     if (currentUser?.lat && currentUser?.lng) {
@@ -221,6 +235,10 @@ const MapPage = () => {
       return true; // 'all' filter shows everyone
     });
   }, [allMapUsers, selectedFilter, getRelationship]);
+
+  const displayedUsers = useMemo(() => {
+    return isPremium ? filteredUsers : filteredUsers.slice(0, 3);
+  }, [filteredUsers, isPremium]);
 
   const handleUserClick = useCallback((user) => {
     setSelectedUser(user);
@@ -324,7 +342,7 @@ const MapPage = () => {
           <button
             key={f.id}
             className={`filter-pill-btn ${selectedFilter === f.id ? 'active' : ''}`}
-            onClick={() => setSelectedFilter(f.id)}
+            onClick={() => handleFilterClick(f.id)}
           >
             {f.label}
           </button>
@@ -373,7 +391,7 @@ const MapPage = () => {
               
               <Marker position={myCenter} icon={myLocationIcon} />
 
-              {filteredUsers.map((user) => (
+              {displayedUsers.map((user) => (
                 <UserMarker 
                   key={user.id} 
                   user={user} 
@@ -390,7 +408,7 @@ const MapPage = () => {
 
           {/* Bottom Swipeable User Carousel */}
           <div className="bottom-carousel-container" ref={carouselRef}>
-            {filteredUsers.map((user) => {
+            {displayedUsers.map((user) => {
               const isSelected = selectedUser?.id === user.id;
               const online = isUserOnline(user);
               return (
@@ -431,13 +449,14 @@ const MapPage = () => {
       ) : (
         /* Nearby List View */
         <div className="nearby-list-container">
-          {filteredUsers.map((user) => {
+          {displayedUsers.map((user) => {
             const online = isUserOnline(user);
             const rel = getRelationship(user);
+            
             return (
               <div 
                 key={user.id} 
-                className="list-user-item-card"
+                className="nearby-list-card"
                 onClick={() => {
                   setSelectedUser(user);
                   setIsPreviewOpen(true);
@@ -497,6 +516,11 @@ const MapPage = () => {
         user={selectedUser}
         isOpen={isPreviewOpen && !!selectedUser}
         onClose={() => setIsPreviewOpen(false)}
+      />
+
+      <PremiumModal
+        isOpen={isPremiumModalOpen}
+        onClose={() => setIsPremiumModalOpen(false)}
       />
     </div>
   );

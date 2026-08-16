@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import PageSkeleton from './components/PageSkeleton';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
+import CallScreen from './components/CallScreen';
 
 // Lazy-load all pages for code splitting
 const SplashScreen  = lazy(() => import('./pages/SplashScreen'));
@@ -39,6 +40,7 @@ function App() {
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        <CallScreen />
       </Suspense>
     </BrowserRouter>
   );
